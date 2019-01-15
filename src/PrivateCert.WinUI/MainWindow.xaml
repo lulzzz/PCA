@@ -1,0 +1,27 @@
+﻿<Window x:Class="PrivateCert.WinUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PrivateCert.WinUI"
+        mc:Ignorable="d"
+        Title="Private Certificate Manager" Height="450" Width="800" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_Certificates">
+                <MenuItem Header="_New" >
+                    <MenuItem Header="_Root" Click="menuNewRoot_Click" />
+                    <MenuItem Header="_Intermediate" Click="MenuNewIntermediate_Click" />
+                    <MenuItem Header="End-_User" Click="MenuNewEndUser_Click" />
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="_Exit" Click="MenuExit_Click" />
+            </MenuItem>
+            <MenuItem Header="_MasterKey">
+                <MenuItem Header="_Change" Click="MenuSetMasterKey_Click" />
+            </MenuItem>
+        </Menu>
+        <TextBox AcceptsReturn="True" />
+        <Button x:Name="btnOK" Click="ButtonBase_OnClick"/>
+    </DockPanel>
+</Window>
