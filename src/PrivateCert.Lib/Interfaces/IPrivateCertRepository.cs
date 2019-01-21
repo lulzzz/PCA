@@ -18,5 +18,7 @@ namespace PrivateCert.Lib.Interfaces
         string GetPassphrase();
 
         void SetPassphrase(string passphrase);
+
+        void AddRootCertificate(Certificate certificate);
     }
 }

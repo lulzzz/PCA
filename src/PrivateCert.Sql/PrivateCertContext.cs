@@ -33,8 +33,6 @@ namespace PrivateCert.Sql
 
             modelBuilder.Entity<Certificate>().Property(e => e.Thumbprint).IsUnicode(false);
 
-            modelBuilder.Entity<Certificate>().Property(e => e.PfxPassword).IsUnicode(false);
-
             modelBuilder.Entity<CertificateType>().Property(e => e.Description).IsUnicode(false);
 
             modelBuilder.Entity<Setting>().Property(e => e.Value).IsUnicode(false);

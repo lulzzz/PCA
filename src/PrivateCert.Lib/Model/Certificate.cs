@@ -15,16 +15,17 @@ using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using Org.BouncyCastle.X509.Extension;
+using PrivateCert.Lib.Features;
 using PrivateCert.Lib.Interfaces;
 
 namespace PrivateCert.Lib.Model
 {
     public class Certificate
     {
-        public static Certificate CreateRootCertificate(DateTime expirationDate, string country, string organization, string organizationUnit, string name, DateTime issueDate, string[] crlUrl)
+        public static Certificate CreateRootCertificate(CreateRootCertificate.Command command, string passphraseDecrypted)
         {
-            var rootDN = $"C={country},O={organization},OU={organizationUnit},CN=" + name.Trim();
-            var x509 = GenerateRootCertificate(rootDN, crlUrl);
+            var rootDN = $"C={command.Country},O={command.Organization},OU={command.OrganizationUnit},CN=" + command.SubjectName.Trim();
+            var x509 = GenerateRootCertificate(rootDN, command.CRLs);
             var certificate = new Certificate()
             {
                 ExpirationDate = x509.NotAfter,
@@ -32,9 +33,10 @@ namespace PrivateCert.Lib.Model
                 SerialNumber = x509.SerialNumber,
                 Name = x509.GetNameInfo(X509NameType.SimpleName, false),
                 Thumbprint = x509.Thumbprint,
-                IssueDate = x509.NotBefore//PfxPassword = 
+                IssueDate = x509.NotBefore,
             };
 
+            certificate.PfxData = x509.Export(X509ContentType.Pfx, passphraseDecrypted);
             return certificate;
         }
 
@@ -42,7 +44,13 @@ namespace PrivateCert.Lib.Model
 
         public DateTime ExpirationDate { get; private set; }
 
-        public CertificateTypeEnum CertificateType { get; private set;}
+        public CertificateTypeEnum CertificateType
+        {
+            get => (CertificateTypeEnum) CertificateTypeId;
+            set => CertificateTypeId = (byte) value;
+        }
+
+        public byte CertificateTypeId { get; private set; }
 
         public string SerialNumber { get; private set; }
 
@@ -56,9 +64,7 @@ namespace PrivateCert.Lib.Model
 
         public byte[] PfxData { get; private set;}
 
-        public string PfxPassword { get; private set;}
-
-        public static X509Certificate2 GenerateRootCertificate(string subjectName, string[] crlUrlPrefixes, int keyStrength = 2048)
+        public static X509Certificate2 GenerateRootCertificate(string subjectName, ICollection<string> crlUrls, int keyStrength = 2048)
         {
             // Generating Random Numbers
             var randomGenerator = new CryptoApiRandomGenerator();
@@ -103,7 +109,7 @@ namespace PrivateCert.Lib.Model
             certificateGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(true));
 
             // Adiciona caminhos de CRL
-            AddRevocationUrls(certificateGenerator, crlUrlPrefixes);
+            AddRevocationUrls(certificateGenerator, crlUrls);
 
             // Informações adicionais para encontrar a cadeia.
             certificateGenerator.AddExtension(
@@ -140,14 +146,14 @@ namespace PrivateCert.Lib.Model
             return x509;
         }
 
-        private static void AddRevocationUrls(X509V3CertificateGenerator certificateGenerator, string[] crlPrefixes)
+        private static void AddRevocationUrls(X509V3CertificateGenerator certificateGenerator, ICollection<string> urlCrls)
         {
             //var versionInfo = string.Format("/v{0}/rootCertificate.crl", versao);
             var distPoints = new List<DistributionPoint>();
-            foreach (var certificatesPrefix in crlPrefixes)
+            foreach (var urlCrl in urlCrls)
             {
                 var distPoint = new DistributionPointName(
-                    new GeneralNames(new GeneralName(GeneralName.UniformResourceIdentifier, certificatesPrefix)));
+                    new GeneralNames(new GeneralName(GeneralName.UniformResourceIdentifier, urlCrl)));
                 distPoints.Add(new DistributionPoint(distPoint, null, null));
             }
 

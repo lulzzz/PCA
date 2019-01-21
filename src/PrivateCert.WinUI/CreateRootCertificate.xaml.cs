@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using PrivateCert.WinUI.Infrastructure;
 
 namespace PrivateCert.WinUI
 {
@@ -35,7 +36,16 @@ namespace PrivateCert.WinUI
 
         private void BtnCreate_Click(object sender, RoutedEventArgs e)
         {
-            //var command = new Lib.Features.CreateRootCertificate.Command(txtName.Text, txtFirstCRL.Text, txtSecondCRL.Text, txtThirdCRL.Text);
+            var command = new Lib.Features.CreateRootCertificate.Command((Lib.Features.CreateRootCertificate.ViewModel)DataContext, App.MasterKeyDecrypted);
+            var result = createRootCertificateCommandHandler.Handle(command);
+            if (!result.IsValid)
+            {
+                MessageBoxHelper.ShowErrorMessage(result.Errors);
+                return;
+            }
+
+            MessageBoxHelper.ShowInfoMessage("Root certificate successfully created.");
+            this.Close();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -45,7 +55,8 @@ namespace PrivateCert.WinUI
                 Country = "BR",
                 Organization = "Organization",
                 OrganizationUnit = "Technology",
-                SubjectName =  "My Enterprise Root Certificate Authority vX"
+                SubjectName =  "My Enterprise Root Certificate Authority vX",
+                ExpirationDateInYears = 10
             };
         }
     }

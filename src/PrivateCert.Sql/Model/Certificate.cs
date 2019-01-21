@@ -15,9 +15,6 @@ namespace PrivateCert.Sql.Model
 
         public byte CertificateTypeId { get;set; }
 
-        [ForeignKey("CertificateTypeId")]
-        public CertificateType CertificateType { get;set; }
-
         [Required]
         [StringLength(100)]
         public string SerialNumber { get; set; }
@@ -36,7 +33,5 @@ namespace PrivateCert.Sql.Model
 
         [Required]
         public byte[] PfxData { get; set; }
-
-        public string PfxPassword { get; set; }
     }
 }

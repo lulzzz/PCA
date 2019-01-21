@@ -60,7 +60,7 @@ namespace PrivateCert.WinUI
 
         private void menuNewRoot_Click(object sender, RoutedEventArgs e)
         {
-            ShowPage<CreateRootCertificate>();
+            ShowPage<CreateRootCertificate>(true);
         }
 
         private void MenuNewIntermediate_Click(object sender, RoutedEventArgs e)
@@ -87,7 +87,7 @@ namespace PrivateCert.WinUI
 
         private void MenuSetMasterKey_Click(object sender, RoutedEventArgs e)
         {
-            ShowPage<SetMasterKey>();
+            ShowPage<SetMasterKey>(true);
         }
     }
 }

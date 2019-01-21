@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PrivateCert.Lib.Features;assembly=PrivateCert.Lib"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         Title="Create Root Certificate" 
         Height="350" 
@@ -23,10 +24,6 @@
                 <Setter Property="Width" Value="75"></Setter>
             </Style>
         </Grid.Resources>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="150" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="50" />
             <RowDefinition Height="Auto" />
@@ -37,34 +34,48 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" TextWrapping="Wrap" Text="The root certificate must have at least 1 Client Revocation Lists (CRL) URL. If you don't have 3 URL, leave blank." VerticalAlignment="Top"/>
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" TextWrapping="Wrap" Text="The root certificate must have at least 1 Client Revocation List (CRL) URL. If you don't have all 3 URL, leave blank." VerticalAlignment="Top"/>
 
-        <TextBlock Grid.Row="1" Grid.Column="0">Country (C)</TextBlock>
-        <TextBox Name="txtCountry" Grid.Row="1" Grid.Column="1" Text="{Binding Country}" />
+        <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock Width="150">Country (C)</TextBlock>
+            <TextBox Name="txtCountry" Text="{Binding Country}" Width="300" />
+        </StackPanel>
+        <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock Width="150">Organization (O)</TextBlock>
+            <TextBox Name="txtOrganization" Text="{Binding Organization}" Width="300"/>
+        </StackPanel>
+        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock Width="150">Organization Unit (OU)</TextBlock>
+            <TextBox Name="txtOrganizationUnit" Text="{Binding OrganizationUnit}" Width="300"/>
+        </StackPanel>
+        <StackPanel Grid.Row="4" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock Width="150">Distinguished Name (DN)</TextBlock>
+            <TextBox Name="txtName" Text="{Binding SubjectName}" Width="300"/>
+        </StackPanel>
+        <StackPanel Grid.Row="5" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock Width="150">First CRL URL</TextBlock>
+            <TextBox Name="txtFirstCRL" Text="{Binding FirstCRL}" Width="300"/>
+        </StackPanel>
+        <StackPanel Grid.Row="6" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock Width="150">Second CRL URL</TextBlock>
+            <TextBox Name="txtSecondCRL" Text="{Binding SecondCRL}" Width="300"/>
+        </StackPanel>
+        <StackPanel Grid.Row="7" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock Width="150">Third CRL URL</TextBlock>
+            <TextBox Name="txtThirdCRL" Text="{Binding ThirdCRL}" Width="300"/>
+        </StackPanel>
+        <StackPanel Grid.Row="8" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock Width="150">Expiration Date (Years)</TextBlock>
+            <TextBox Name="txtExpiration" Text="{Binding ExpirationDate}" Width="50"/>
+        </StackPanel>
 
-        <TextBlock Grid.Row="2" Grid.Column="0">Organization (O)</TextBlock>
-        <TextBox Name="txtOrganization" Grid.Row="2" Grid.Column="1" Text="{Binding Organization}" />
-
-        <TextBlock Grid.Row="3" Grid.Column="0">Organization Unit (OU)</TextBlock>
-        <TextBox Name="txtOrganizationUnit" Grid.Row="3" Grid.Column="1" Text="{Binding OrganizationUnit}" />
-
-        <TextBlock Grid.Row="4" Grid.Column="0">Distinguished Name (DN)</TextBlock>
-        <TextBox Name="txtName" Grid.Row="4" Grid.Column="1" Text="{Binding SubjectName}" />
-
-        <TextBlock Grid.Row="5" Grid.Column="0">First CRL URL</TextBlock>
-        <TextBox Name="txtFirstCRL" Grid.Row="5" Grid.Column="1" Text="{Binding FirstCRL}" />
-
-        <TextBlock Grid.Row="6" Grid.Column="0">Second CRL URL</TextBlock>
-        <TextBox Name="txtSecondCRL" Grid.Row="6" Grid.Column="1" Text="{Binding SecondCRL}" />
-
-        <TextBlock Grid.Row="7" Grid.Column="0">Third CRL URL</TextBlock>
-        <TextBox Name="txtThirdCRL" Grid.Row="7" Grid.Column="1" Text="{Binding ThirdCRL}" />
-
-
-        <Button Name="btnCreate" Grid.Row="9" Grid.Column="1" Content="Create" HorizontalAlignment="Left"  VerticalAlignment="Top"  Click="BtnCreate_Click" Margin="183,18,0,0"  />
-        <Button Name="btnCancel" Grid.Row="9" Grid.Column="1" Content="Cancel" HorizontalAlignment="Left" VerticalAlignment="Top"  Click="BtnCancel_Click" Margin="275,18,0,0"   />
+        <StackPanel Grid.Row="9" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+            <Button Name="btnCreate" Content="Create" HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="5,0"  Click="BtnCreate_Click"  />
+            <Button Name="btnCancel" Content="Cancel" HorizontalAlignment="Left" VerticalAlignment="Top"  Click="BtnCancel_Click"    />
+        </StackPanel>
     </Grid>
 </Window>

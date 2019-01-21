@@ -21,7 +21,9 @@ using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using Org.BouncyCastle.X509.Extension;
+using PrivateCert.Lib.Infrastructure;
 using PrivateCert.Lib.Interfaces;
+using PrivateCert.Lib.Model;
 
 namespace PrivateCert.Lib.Features
 {
@@ -36,14 +38,23 @@ namespace PrivateCert.Lib.Features
             public string FirstCRL { get; set; }
             public string SecondCRL { get; set; }
             public string ThirdCRL { get; set; }
-            public DateTime ExpirationDate { get; set; }
+            public int ExpirationDateInYears { get; set; }
         }
 
         public class Command
         {
-            public Command(ViewModel viewModel)
+            public string MasterKeyDecrypted { get; }
+
+            public Command(ViewModel viewModel, string masterKeyDecrypted)
             {
+
+                MasterKeyDecrypted = masterKeyDecrypted;
+                Country = viewModel.Country;
+                Organization = viewModel.Organization;
+                OrganizationUnit = viewModel.OrganizationUnit;
+                ExpirationDateInYears = viewModel.ExpirationDateInYears;
                 SubjectName = viewModel.SubjectName;
+                CRLs = new List<string>();
                 AddCRL(viewModel.FirstCRL);
                 AddCRL(viewModel.SecondCRL);
                 AddCRL(viewModel.ThirdCRL);
@@ -51,12 +62,24 @@ namespace PrivateCert.Lib.Features
 
             private void AddCRL(string url)
             {
-                var trimmedUrl = url.Trim();
-                if (!string.IsNullOrEmpty(trimmedUrl))
+                if (url == null)
                 {
-                    CRLs.Add(trimmedUrl);
+                    return;
                 }
+
+                var trimmedUrl = url.Trim();
+                if (trimmedUrl == string.Empty)
+                {
+                    return;
+                }
+
+                CRLs.Add(trimmedUrl);
             }
+
+            public string Country { get; private set; }
+            public string Organization { get; private set; }
+            public string OrganizationUnit { get; private set; }
+            public int ExpirationDateInYears { get; private set; }
 
             public string SubjectName { get; private set; }
 
@@ -65,24 +88,31 @@ namespace PrivateCert.Lib.Features
 
         public class CommandHandler
         {
+            private readonly IPrivateCertRepository privateCertRepository;
             private readonly CommandValidator validator;
 
-            public CommandHandler(CommandValidator validator)
+            private readonly IUnitOfWork unitOfWork;
+
+            public CommandHandler(CommandValidator validator, IPrivateCertRepository privateCertRepository, IUnitOfWork unitOfWork)
             {
                 this.validator = validator;
+                this.privateCertRepository = privateCertRepository;
+                this.unitOfWork = unitOfWork;
             }
 
-            public Result Handle(Command command)
+            public ValidationResult Handle(Command command)
             {
-                var result = new Result();
-                result.ValidationResult = validator.Validate(command);
-                if (!result.ValidationResult.IsValid)
+                var result  = validator.Validate(command);
+                if (!result.IsValid)
                 {
                     return result;
                 }
 
-                //var certificate = new Certificate;
-                //GenerateRootCertificate()
+                var passphrase = privateCertRepository.GetPassphrase();
+                var passphraseDecrypted = StringCipher.Decrypt(passphrase, command.MasterKeyDecrypted);
+                var certificate = Certificate.CreateRootCertificate(command, passphraseDecrypted);
+                privateCertRepository.AddRootCertificate(certificate);
+                unitOfWork.SaveChanges();
 
                 return result;
             }
@@ -112,11 +142,6 @@ namespace PrivateCert.Lib.Features
                     }
                 }    
             }
-        }
-
-        public class Result : IValidationResult
-        {
-            public ValidationResult ValidationResult { get; set; }
         }
     }
 }

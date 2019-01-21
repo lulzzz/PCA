@@ -19,10 +19,6 @@
                 <Setter Property="Width" Value="75"></Setter>
             </Style>
         </Grid.Resources>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="130" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="50" />
             <RowDefinition Height="Auto"/>
@@ -32,16 +28,24 @@
         </Grid.RowDefinitions>
         <TextBlock Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top"><Run Text="The system needs a master key to encrypt certificate data."/><Run Text=" You can change the key below. "/><Run Text=" If you lose this password, you won't be able to access this store."/></TextBlock>
 
-        <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" TextWrapping="Wrap" Text="Current Password" VerticalAlignment="Top"/>
-        <PasswordBox Name="pwdCurrentPassword" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Top" Width="239" />
+        <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock  HorizontalAlignment="Left" TextWrapping="Wrap" Text="Current Password" VerticalAlignment="Top" Width="150"/>
+            <PasswordBox Name="pwdCurrentPassword"  HorizontalAlignment="Left" VerticalAlignment="Top" Width="239" />
+        </StackPanel>
 
-        <TextBlock Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left" TextWrapping="Wrap" Text="New Password" VerticalAlignment="Top"/>
-        <PasswordBox Name="pwdPassword" Grid.Row="2" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Top" Width="239" />
+        <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="New Password" VerticalAlignment="Top" Width="150"/>
+            <PasswordBox Name="pwdPassword" HorizontalAlignment="Left" VerticalAlignment="Top" Width="239" />
+        </StackPanel>
 
-        <TextBlock Grid.Row="3" Grid.Column="0" HorizontalAlignment="Left" TextWrapping="Wrap" Text="Retype New Password" VerticalAlignment="Top"/>
-        <PasswordBox Name="pwdRetypePassword" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Top" Width="239" />
+        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="Retype New Password" VerticalAlignment="Top" Width="150"/>
+            <PasswordBox Name="pwdRetypePassword" HorizontalAlignment="Left" VerticalAlignment="Top" Width="239" />
+        </StackPanel>
 
-        <Button Name="btnSave" Content="Save" Grid.Column="1" HorizontalAlignment="Left" Margin="200,49,0,0" Grid.Row="4" VerticalAlignment="Top" Click="BtnSave_Click" />
-        <Button Name="btnCancel" Content="Cancel" Grid.Column="1" HorizontalAlignment="Left" Margin="280,49,0,0" Grid.Row="4" VerticalAlignment="Top" Click="BtnCancel_Click"/>
+        <StackPanel Grid.Row="4" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" >
+            <Button Name="btnSave" Content="Save" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,0" Click="BtnSave_Click" />
+            <Button Name="btnCancel" Content="Cancel"  HorizontalAlignment="Left" VerticalAlignment="Top" Click="BtnCancel_Click"/>
+        </StackPanel>
     </Grid>
 </Window>
