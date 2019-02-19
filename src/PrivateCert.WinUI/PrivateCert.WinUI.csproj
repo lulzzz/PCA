@@ -113,6 +113,14 @@
     </ApplicationDefinition>
     <Compile Include="Infrastructure\BaseWindow.cs" />
     <Compile Include="Infrastructure\MessageBoxHelper.cs" />
+    <Page Include="UserControls\ListCertificates.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserControls\SetMasterKey.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Windows\ListCertificates.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -128,6 +136,13 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="UserControls\BaseUserControl.cs" />
+    <Compile Include="UserControls\ListCertificates.xaml.cs">
+      <DependentUpon>ListCertificates.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\SetMasterKey.xaml.cs">
+      <DependentUpon>SetMasterKey.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\ListCertificates.xaml.cs">
       <DependentUpon>ListCertificates.xaml</DependentUpon>

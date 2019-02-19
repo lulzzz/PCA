@@ -1,0 +1,33 @@
+﻿<base:BaseUserControl x:Class="PrivateCert.WinUI.UserControls.ListCertificates"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PrivateCert.Lib.Features;assembly=PrivateCert.Lib"
+        xmlns:base="clr-namespace:PrivateCert.WinUI.UserControls"
+        mc:Ignorable="d"
+        Loaded="ListCertificates_OnLoaded" 
+        d:DataContext="{d:DesignInstance local:ListCertificates+ViewModel}">
+    <Grid>
+        <DataGrid Name="dgCertificates"
+                  ItemsSource="{Binding Certificates}" 
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False" 
+                  CanUserDeleteRows="False" 
+                  CanUserResizeRows="False" 
+                  CanUserReorderColumns="False"
+                  CanUserSortColumns="False"
+                  ClipboardCopyMode="IncludeHeader"
+                  MouseDoubleClick="DgCertificates_OnMouseDoubleClick"
+                  SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Id" IsReadOnly="True" Binding="{Binding CertificateId}"/>
+                <DataGridTextColumn Header="Type" IsReadOnly="True" Binding="{Binding CertificateType}"/>
+                <DataGridTextColumn Header="Name" IsReadOnly="True" Binding="{Binding Name}"/>
+                <DataGridTextColumn Header="Issue Date" IsReadOnly="True" Binding="{Binding IssueDate}"/>
+                <DataGridTextColumn Header="Expiration Date" IsReadOnly="True" Binding="{Binding ExpirationDate}"/>
+                <DataGridTextColumn Header="Revocation Date" IsReadOnly="True" Binding="{Binding RevocationDate}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</base:BaseUserControl>
