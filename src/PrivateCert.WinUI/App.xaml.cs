@@ -7,6 +7,7 @@ using PrivateCert.CompositionRoot;
 using PrivateCert.Lib.Interfaces;
 using PrivateCert.Lib.Model;
 using PrivateCert.WinUI.Infrastructure;
+using PrivateCert.WinUI.Windows;
 using StructureMap;
 
 namespace PrivateCert.WinUI

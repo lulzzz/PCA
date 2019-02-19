@@ -8,6 +8,7 @@ namespace PrivateCert.Sql.Infrastructure
         public SqlMappingProfile()
         {
             CreateMap<Log, PrivateCert.Sql.Model.Log>();
+            CreateMap<PrivateCert.Sql.Model.Certificate, Certificate>();
         }
     }
 }

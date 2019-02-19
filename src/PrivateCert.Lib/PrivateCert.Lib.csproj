@@ -92,7 +92,9 @@
     <Compile Include="Features\CreateIntermediateCertificate.cs" />
     <Compile Include="Features\CreateMasterKey.cs" />
     <Compile Include="Features\CreateRootCertificate.cs" />
+    <Compile Include="Features\DownloadCertificate.cs" />
     <Compile Include="Features\GetMasterKey.cs" />
+    <Compile Include="Features\ListCertificates.cs" />
     <Compile Include="Features\SetMasterKey.cs" />
     <Compile Include="Infrastructure\StringCipher.cs" />
     <Compile Include="Infrastructure\StringHash.cs" />

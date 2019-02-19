@@ -1,25 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using PrivateCert.Lib.Interfaces;
+﻿using System.Windows;
 using PrivateCert.WinUI.Infrastructure;
 
-namespace PrivateCert.WinUI
+namespace PrivateCert.WinUI.Windows
 {
     /// <summary>
     /// Interaction logic for MasterKey.xaml
     /// </summary>
-    public partial class SetMasterKey : Window
+    public partial class SetMasterKey : BaseWindow
     {
         private readonly Lib.Features.SetMasterKey.CommandHandler setMasterKeyCommandHandler;
 
@@ -45,6 +32,11 @@ namespace PrivateCert.WinUI
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        private void SetMasterKey_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            pwdCurrentPassword.Focus();
         }
     }
 }

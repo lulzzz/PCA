@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using PrivateCert.Lib.Features;
+using PrivateCert.Lib.Model;
 
 namespace PrivateCert.Lib.Infrastructure
 {
@@ -11,6 +13,7 @@ namespace PrivateCert.Lib.Infrastructure
     {
         public LibMappingProfile ()
         {
+            CreateMap<Certificate, ListCertificates.CertificateVM>();
         }
     }
 }

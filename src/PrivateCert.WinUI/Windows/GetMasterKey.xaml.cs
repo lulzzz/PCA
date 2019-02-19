@@ -1,22 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using PrivateCert.Lib.Interfaces;
+﻿using System.Windows;
 using PrivateCert.WinUI.Infrastructure;
 
-namespace PrivateCert.WinUI
+namespace PrivateCert.WinUI.Windows
 {
-    public partial class GetMasterKey : Window
+    public partial class GetMasterKey : BaseWindow
     {
         private readonly Lib.Features.GetMasterKey.QueryHandler getMasterKeyQueryHandler;
 
@@ -45,6 +32,11 @@ namespace PrivateCert.WinUI
         {
             DialogResult = false;
             this.Close();
+        }
+
+        private void GetMasterKey_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            pwdPassword.Focus();
         }
     }
 }

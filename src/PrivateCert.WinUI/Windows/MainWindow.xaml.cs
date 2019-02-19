@@ -3,9 +3,8 @@ using System.Windows.Markup;
 using PrivateCert.CompositionRoot;
 using PrivateCert.Lib.Interfaces;
 using PrivateCert.WinUI.Infrastructure;
-using StructureMap;
 
-namespace PrivateCert.WinUI
+namespace PrivateCert.WinUI.Windows
 {
     /// <summary>
     ///     Interaction logic for MainWindow.xaml
@@ -25,27 +24,27 @@ namespace PrivateCert.WinUI
         }
 
         private static void ShowPage<T>(bool dialog = false, string failureMessage = null, bool exitIfFailure = false)
-            where T : Window, IComponentConnector
+            where T : BaseWindow, IComponentConnector
         {
-            using (var container = SqlIoC.GetNestedContainer())
+            var container = SqlIoC.GetNestedContainer();
+            var page = container.GetInstance<T>();
+            page.IoCContainer = container;
+            page.InitializeComponent();
+            page.ShowInTaskbar = false;
+            page.Owner = Application.Current.MainWindow;
+
+            if (dialog)
             {
-                var page = container.GetInstance<T>();
-                page.InitializeComponent();
-                page.ShowInTaskbar = false;
-                page.Owner = Application.Current.MainWindow;
-                if (dialog)
+                var sucess = page.ShowDialog();
+                if (exitIfFailure && (!sucess.HasValue || !sucess.Value))
                 {
-                    var sucess = page.ShowDialog();
-                    if (exitIfFailure && (!sucess.HasValue || !sucess.Value))
-                    {
-                        MessageBoxHelper.ShowInfoMessage(failureMessage);
-                        Application.Current.Shutdown(0);
-                    }
+                    MessageBoxHelper.ShowInfoMessage(failureMessage);
+                    Application.Current.Shutdown(0);
                 }
-                else
-                {
-                    page.Show();
-                }
+            }
+            else
+            {
+                page.Show();
             }
         }
 
@@ -60,7 +59,7 @@ namespace PrivateCert.WinUI
 
         private void menuNewRoot_Click(object sender, RoutedEventArgs e)
         {
-            ShowPage<CreateRootCertificate>(true);
+            ShowPage<CreateRootCertificate>();
         }
 
         private void MenuNewIntermediate_Click(object sender, RoutedEventArgs e)
@@ -88,6 +87,11 @@ namespace PrivateCert.WinUI
         private void MenuSetMasterKey_Click(object sender, RoutedEventArgs e)
         {
             ShowPage<SetMasterKey>(true);
+        }
+
+        private void MenuList_Click(object sender, RoutedEventArgs e)
+        {
+            ShowPage<ListCertificates>(true);
         }
     }
 }

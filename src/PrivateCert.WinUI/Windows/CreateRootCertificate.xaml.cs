@@ -1,26 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+﻿using System.Windows;
 using PrivateCert.WinUI.Infrastructure;
 
-namespace PrivateCert.WinUI
+namespace PrivateCert.WinUI.Windows
 {
     /// <summary>
     /// Interaction logic for CreateRootCertificate.xaml
     /// </summary>
-    public partial class CreateRootCertificate : Window
+    public partial class CreateRootCertificate : BaseWindow
     {
-        
         private readonly Lib.Features.CreateRootCertificate.CommandHandler createRootCertificateCommandHandler;
 
         public CreateRootCertificate(Lib.Features.CreateRootCertificate.CommandHandler createRootCertificateCommandHandler)
@@ -58,6 +45,7 @@ namespace PrivateCert.WinUI
                 SubjectName =  "My Enterprise Root Certificate Authority vX",
                 ExpirationDateInYears = 10
             };
+            txtCountry.Focus();
         }
     }
 }

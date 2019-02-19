@@ -58,5 +58,17 @@ namespace PrivateCert.Sql.Repositories
             var efCertificate = Mapper.Map<Model.Certificate>(certificate);
             context.Certificates.Add(efCertificate);
         }
+
+        public Certificate GetCertificate(int certificateId)
+        {
+            var efCertificate = context.Certificates.Find(certificateId);
+            return Mapper.Map<Certificate>(efCertificate);
+        }
+
+        public ICollection<Certificate> GetAllCertificates()
+        {
+            var efCertificates = context.Certificates.OrderBy(c => c.CertificateTypeId).ThenBy(c => c.Name).ToList();
+            return Mapper.Map<ICollection<Certificate>>(efCertificates);
+        }
     }
 }

@@ -20,8 +20,7 @@ BEGIN
 		 [Thumbprint]        [VARCHAR](250) NOT NULL, 
 		 [IssueDate]         [DATETIME] NOT NULL, 
 		 [RevocationDate]    [DATETIME] NULL, 
-		 [PfxData]           [VARBINARY](max) NOT NULL, 
-		 [PfxPassword]       [VARCHAR](max) NULL, 
+		 [PfxData]           [VARBINARY](max) NOT NULL
 		 CONSTRAINT [PK_.Certificates] PRIMARY KEY CLUSTERED ( [CertificateId] 
 		 ASC )
 	  ) 
