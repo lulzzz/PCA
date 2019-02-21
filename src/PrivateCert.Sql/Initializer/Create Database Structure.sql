@@ -2,11 +2,7 @@
 /****** Object:  Table [dbo].[Certificate]    Script Date: 14/01/2019 12:38:41 ******/ 
 SET ansi_nulls ON 
 
-go 
-
 SET quoted_identifier ON 
-
-go 
 
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Certificates')
 BEGIN
@@ -25,7 +21,6 @@ BEGIN
 		 ASC )
 	  ) 
 END
-go 
 
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'CertificateTypes')
 BEGIN
@@ -58,7 +53,6 @@ BEGIN
 		 CONSTRAINT [PK_Settings] PRIMARY KEY CLUSTERED ( [SettingId] ASC )
 	  ) 
 END
-go 
 
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_NAME = 'FK_Certificates_CertificateTypes')
 BEGIN
@@ -70,4 +64,34 @@ BEGIN
 
 	ALTER TABLE [dbo].[Certificates] 
 	  CHECK CONSTRAINT [FK_Certificates_CertificateTypes] 
+END
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '_DBVersions')
+BEGIN
+	CREATE TABLE [_DBVersions](
+		[VersionID] [int] NOT NULL,
+		[CreationDate] [datetime] NOT NULL
+	 CONSTRAINT [PK_Version] PRIMARY KEY CLUSTERED 
+	(
+		[VersionID] ASC
+	))
+END
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '_DBScripts')
+BEGIN
+	CREATE TABLE [_DBScripts](
+		[ScriptID] [int] IDENTITY(1,1) NOT FOR REPLICATION NOT NULL,
+		[VersionID] [int] NOT NULL,
+		[ScriptName] [varchar](200) NOT NULL,
+		[ExecutionDate] [datetime] NOT NULL,
+	 CONSTRAINT [PK_DBScripts] PRIMARY KEY CLUSTERED 
+	(
+		[ScriptID] ASC
+	)) 
+END
+
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_NAME = 'FK_DBScripts_DBVersion')
+BEGIN
+	ALTER TABLE [_DBScripts]  WITH CHECK ADD  CONSTRAINT [FK_DBScripts_DBVersion] FOREIGN KEY([VersionID])
+	REFERENCES [_DBVersions] ([VersionID])
 END

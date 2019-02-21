@@ -1,6 +1,7 @@
 using System;
 using System.Data.Entity;
 using PrivateCert.Lib.Interfaces;
+using PrivateCert.Sql.Initializer;
 using PrivateCert.Sql.Model;
 
 namespace PrivateCert.Sql
@@ -9,7 +10,7 @@ namespace PrivateCert.Sql
     {
         public PrivateCertContext() : base("name=PrivateCertDatabase")
         {
-            Database.SetInitializer(new NullDatabaseInitializer<PrivateCertContext>());
+            Database.SetInitializer(new EFInitializer());
         }
 
         public virtual DbSet<Certificate> Certificates { get; set; }

@@ -3,8 +3,8 @@ using System.Windows;
 using System.Windows.Markup;
 using PrivateCert.CompositionRoot;
 using PrivateCert.Lib.Interfaces;
+using PrivateCert.WinUI.Controls;
 using PrivateCert.WinUI.Infrastructure;
-using PrivateCert.WinUI.UserControls;
 
 namespace PrivateCert.WinUI.Windows
 {
@@ -56,6 +56,11 @@ namespace PrivateCert.WinUI.Windows
 
         private void MenuExit_Click(object sender, RoutedEventArgs e)
         {
+            foreach (IDisposable item in mainTab.Items)
+            {
+                item.Dispose();
+            }
+
             Application.Current.Shutdown(0);
         }
 
@@ -88,39 +93,33 @@ namespace PrivateCert.WinUI.Windows
 
         private void MenuSetMasterKey_Click(object sender, RoutedEventArgs e)
         {
-            var container = SqlIoC.GetNestedContainer();
-            var control = container.GetInstance<UserControls.SetMasterKey>();
-            control.InitializeComponent();
-            control.Closed += ControlOnClosed;
-            control.ClosedAndExitApplication += ClosedAndExitApplication;
-            ContentArea.Content = control;
-            ContentArea.Height = 250;
-            ContentArea.Width = 520.657;
-        }
-
-        private void ClosedAndExitApplication(object sender, EventArgs e)
-        {
-            ContentArea.Content = null;
-            ((BaseUserControl) sender).Closed -= ClosedAndExitApplication;
-            Application.Current.Shutdown(0);
-        }
-
-        private void ControlOnClosed(object sender, EventArgs e)
-        {
-            ContentArea.Content = null;
-            ((BaseUserControl) sender).Closed -= ControlOnClosed;
+            ShowPage<SetMasterKey>();
         }
 
         private void MenuList_Click(object sender, RoutedEventArgs e)
         {
-            var container = SqlIoC.GetNestedContainer();
-            var control = container.GetInstance<UserControls.ListCertificates>();
-            control.InitializeComponent();
-            control.Closed += ControlOnClosed;
-            control.ClosedAndExitApplication += ClosedAndExitApplication;
-            ContentArea.Content = control;
-            ContentArea.Height = Double.NaN;
-            ContentArea.Width = Double.NaN;
+            ShowTab<Controls.ListCertificates>("Certificates", true);
+        }
+
+        private void ShowTab<T>(string title, bool singleTab) where T : IComponentConnector
+        {
+            if (singleTab)
+            {
+                foreach (var tabItem in mainTab.Items)
+                {
+                    if (!(tabItem is MainTabItem<T> item))
+                    {
+                        continue;
+                    }
+
+                    item.Focus();
+                    return;
+                }
+            }
+
+            var newTabItem = new MainTabItem<T> {Title = title};
+            mainTab.Items.Add(newTabItem);
+            newTabItem.Focus();
         }
     }
 }

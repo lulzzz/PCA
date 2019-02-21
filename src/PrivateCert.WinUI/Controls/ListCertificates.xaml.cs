@@ -1,18 +1,19 @@
 ﻿using System;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using Microsoft.Win32;
 using PrivateCert.Lib.Features;
 using PrivateCert.Lib.Interfaces;
 using PrivateCert.WinUI.Infrastructure;
 
-namespace PrivateCert.WinUI.UserControls
+namespace PrivateCert.WinUI.Controls
 {
     /// <summary>
     ///     Interaction logic for ListCertificates.xaml
     /// </summary>
-    public partial class ListCertificates : BaseUserControl
+    public partial class ListCertificates : UserControl
     {
         private readonly Lib.Features.ListCertificates.QueryHandler listCertificateQueryHandler;
 
@@ -34,7 +35,7 @@ namespace PrivateCert.WinUI.UserControls
             if (!viewModel.ValidationResult.IsValid)
             {
                 MessageBoxHelper.ShowErrorMessage(viewModel.ValidationResult.Errors);
-                Close();
+                ((MainTabItem<ListCertificates>)Parent).Close();
             }
 
             DataContext = viewModel;

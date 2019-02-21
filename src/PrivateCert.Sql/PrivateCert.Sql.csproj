@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Infrastructure\SqlMappingProfile.cs" />
+    <Compile Include="Initializer\EFInitializer.cs" />
     <Compile Include="IPrivateCertContext.cs" />
     <Compile Include="Model\CertificateType.cs" />
     <Compile Include="Model\Log.cs" />
@@ -79,8 +80,8 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <Content Include="Scripts\001\001 - Create Database Structure.sql" />
-    <Content Include="Scripts\001\002 - Seed Data.sql" />
+    <EmbeddedResource Include="Initializer\Create Database Structure.sql" />
+    <EmbeddedResource Include="Initializer\Scripts\001\001 - Seed Data.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

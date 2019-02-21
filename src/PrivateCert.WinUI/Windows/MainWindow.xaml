@@ -22,7 +22,7 @@
                 <MenuItem Header="_Change" Click="MenuSetMasterKey_Click" />
             </MenuItem>
         </Menu>
-        <!-- Content Area -->
-        <ContentControl x:Name="ContentArea" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0" />
+        <TabControl x:Name="mainTab" >
+        </TabControl>
     </DockPanel>
 </Window>

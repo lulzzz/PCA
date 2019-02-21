@@ -111,13 +111,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Controls\CloseableHeader.xaml.cs">
+      <DependentUpon>CloseableHeader.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Infrastructure\BaseWindow.cs" />
     <Compile Include="Infrastructure\MessageBoxHelper.cs" />
-    <Page Include="UserControls\ListCertificates.xaml">
+    <Page Include="Controls\CloseableHeader.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="UserControls\SetMasterKey.xaml">
+    <Page Include="Controls\ListCertificates.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -137,13 +140,10 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UserControls\BaseUserControl.cs" />
-    <Compile Include="UserControls\ListCertificates.xaml.cs">
+    <Compile Include="Controls\ListCertificates.xaml.cs">
       <DependentUpon>ListCertificates.xaml</DependentUpon>
     </Compile>
-    <Compile Include="UserControls\SetMasterKey.xaml.cs">
-      <DependentUpon>SetMasterKey.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="Controls\MainTabItem.cs" />
     <Compile Include="Windows\ListCertificates.xaml.cs">
       <DependentUpon>ListCertificates.xaml</DependentUpon>
     </Compile>
