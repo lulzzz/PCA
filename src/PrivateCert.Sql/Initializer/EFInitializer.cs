@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Entity;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace PrivateCert.Sql.Initializer
 {
@@ -22,21 +19,22 @@ namespace PrivateCert.Sql.Initializer
                 context.Database.Create();
                 ExecuteScript(context, assembly, "PrivateCert.Sql.Initializer.Create Database Structure.sql");
             }
-            
+
             // Check DB version
-            int? maxVersion = GetMaxVersion(context);
+            var maxVersion = GetMaxVersion(context);
 
             var allScriptNames = assembly.GetManifestResourceNames()
-                .Where(str => str.StartsWith("PrivateCert.Sql.Initializer.Scripts")).OrderBy(c=>c);
+                .Where(str => str.StartsWith("PrivateCert.Sql.Initializer.Scripts"))
+                .OrderBy(c => c);
             foreach (var scriptName in allScriptNames)
             {
-                Match m = Regex.Match(scriptName, @"\._(?<version>\d\d\d)\.", RegexOptions.IgnoreCase);
+                var m = Regex.Match(scriptName, @"\._(?<version>\d\d\d)\.", RegexOptions.IgnoreCase);
                 if (!m.Success)
                 {
                     continue;
                 }
 
-                int scriptVersion = int.Parse(m.Groups["version"].Value);
+                var scriptVersion = int.Parse(m.Groups["version"].Value);
 
                 if (scriptVersion < maxVersion)
                 {
@@ -52,26 +50,41 @@ namespace PrivateCert.Sql.Initializer
                 {
                     context.BeginTransaction();
 
-                    // Create new version
                     CreateVersionIfNotExists(context, scriptVersion);
                     ExecuteScript(context, assembly, scriptName);
                     InsertScriptLog(context, scriptVersion, scriptName);
-                    //context.CommitTransaction();
 
-                    context.RollbackTransaction();
+                    context.CommitTransaction();
                 }
                 catch
                 {
                     context.RollbackTransaction();
                 }
-                
             }
+        }
 
+        private static int? GetMaxVersion(PrivateCertContext context)
+        {
+            return context.Database.SqlQuery<int?>("SELECT MAX(VersionID) FROM _DBVersions").SingleOrDefault();
+        }
+
+        private static void ExecuteScript(PrivateCertContext context, Assembly assembly, string resourceName)
+        {
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                using (var reader = new StreamReader(stream))
+                {
+                    var sql = reader.ReadToEnd();
+                    context.Database.ExecuteSqlCommand(sql);
+                }
+            }
         }
 
         private void InsertScriptLog(PrivateCertContext context, int scriptVersion, string scriptName)
         {
-            context.Database.ExecuteSqlCommand("INSERT INTO _DBScripts (VersionID, ScriptName, ExecutionDate) VALUES (@p0, @p1, GETDATE())", scriptVersion, scriptName);
+            context.Database.ExecuteSqlCommand(
+                "INSERT INTO _DBScripts (VersionID, ScriptName, ExecutionDate) VALUES (@p0, @p1, GETDATE())", scriptVersion,
+                scriptName);
         }
 
         private bool ScriptAlreadyExecuted(PrivateCertContext context, int scriptVersion, string scriptName)
@@ -89,23 +102,6 @@ namespace PrivateCert.Sql.Initializer
                 .HasValue)
             {
                 context.Database.ExecuteSqlCommand("INSERT INTO _DBVersions VALUES (@p0, GETDATE())", scriptVersion);
-            }
-        }
-
-        private static int? GetMaxVersion(PrivateCertContext context)
-        {
-            return context.Database.SqlQuery<int?>("SELECT MAX(VersionID) FROM _DBVersions").SingleOrDefault();
-        }
-
-        private static void ExecuteScript(PrivateCertContext context, Assembly assembly, string resourceName)
-        {
-            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-            {
-                using (StreamReader reader = new StreamReader(stream))
-                {
-                    string sql = reader.ReadToEnd();
-                    context.Database.ExecuteSqlCommand(sql);
-                }
             }
         }
     }
