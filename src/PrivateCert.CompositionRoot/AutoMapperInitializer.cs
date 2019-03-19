@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using PrivateCert.Lib.Infrastructure;
-using PrivateCert.Sql.Infrastructure;
+using PrivateCert.Sqlite.Infrastructure;
 
 namespace PrivateCert.CompositionRoot
 {

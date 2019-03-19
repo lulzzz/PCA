@@ -79,9 +79,9 @@
       <Project>{f029e91e-fd95-413d-9c42-e85f7e6f14a9}</Project>
       <Name>PrivateCert.Lib</Name>
     </ProjectReference>
-    <ProjectReference Include="..\PrivateCert.Sql\PrivateCert.Sql.csproj">
-      <Project>{56da4a83-a6a4-4a5f-bddb-9c7ed3d3e87a}</Project>
-      <Name>PrivateCert.Sql</Name>
+    <ProjectReference Include="..\PrivateCert.Sqlite\PrivateCert.Sqlite.csproj">
+      <Project>{9cbb5b30-a509-44cb-a912-03e844691886}</Project>
+      <Name>PrivateCert.Sqlite</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

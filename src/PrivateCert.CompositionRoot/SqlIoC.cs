@@ -5,8 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentValidation;
 using PrivateCert.Lib.Interfaces;
-using PrivateCert.Sql;
-using PrivateCert.Sql.Repositories;
+using PrivateCert.Sqlite;
+using PrivateCert.Sqlite.Repositories;
 using StructureMap;
 
 namespace PrivateCert.CompositionRoot

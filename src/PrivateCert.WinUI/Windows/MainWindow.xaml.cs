@@ -64,16 +64,12 @@ namespace PrivateCert.WinUI.Windows
             Application.Current.Shutdown(0);
         }
 
-        private void menuNewRoot_Click(object sender, RoutedEventArgs e)
+        private void MenuNewRoot_Click(object sender, RoutedEventArgs e)
         {
             ShowPage<CreateRootCertificate>();
         }
 
         private void MenuNewIntermediate_Click(object sender, RoutedEventArgs e)
-        {
-        }
-
-        private void MenuNewEndUser_Click(object sender, RoutedEventArgs e)
         {
         }
 
@@ -120,6 +116,16 @@ namespace PrivateCert.WinUI.Windows
             var newTabItem = new MainTabItem<T> {Title = title};
             mainTab.Items.Add(newTabItem);
             newTabItem.Focus();
+        }
+
+        private void MenuNewServer_Click(object sender, RoutedEventArgs e)
+        {
+            ShowPage<CreateServerCertificate>();
+        }
+
+        private void MenuNewClient_Click(object sender, RoutedEventArgs e)
+        {
+            ShowPage<CreateClientCertificate>();
         }
     }
 }

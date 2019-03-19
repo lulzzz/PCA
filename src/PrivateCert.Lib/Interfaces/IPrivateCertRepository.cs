@@ -11,7 +11,7 @@ namespace PrivateCert.Lib.Interfaces
     {
         string GetMasterKey();
 
-        decimal InsertError(Log log);
+        void InsertError(Log log);
 
         void SetMasterKey(string password);
 

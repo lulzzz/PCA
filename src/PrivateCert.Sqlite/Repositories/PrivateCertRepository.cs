@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity.Infrastructure.Interception;
+using System.Data;
+using System.Data.SQLite;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AutoMapper;
-using AutoMapper.Mappers;
 using PrivateCert.Lib.Interfaces;
-using PrivateCert.Sql.Model;
+using PrivateCert.Sqlite.Infrastructure;
+using Serilog;
+using Serilog.Events;
 using Certificate = PrivateCert.Lib.Model.Certificate;
 using Log = PrivateCert.Lib.Model.Log;
 
-namespace PrivateCert.Sql.Repositories
+namespace PrivateCert.Sqlite.Repositories
 {
     public class PrivateCertRepository:IPrivateCertRepository
     {
@@ -28,12 +28,8 @@ namespace PrivateCert.Sql.Repositories
 
         public void InsertError(Log log)
         {
-            // Needs to be separated from any transactional context.
-            using (var logContext = new PrivateCertContext())
-            {
-                var efLog = Mapper.Map<Sql.Model.Log>(log);
-                logContext.Logs.Add(efLog);
-            }
+            var logger = new LoggerConfiguration().WriteTo.RollingFile("logs\\log.txt",LogEventLevel.Error).CreateLogger();
+            logger.Error("{B}", log.Message);
         }
 
         public void SetMasterKey(string password)

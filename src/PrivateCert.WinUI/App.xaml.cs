@@ -30,38 +30,38 @@ namespace PrivateCert.WinUI
             container?.Dispose();
         }
 
-        private void App_OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
-        {
-            try
-            {
-                decimal erroId = 0;
+        //private void App_OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        //{
+        //    try
+        //    {
+        //        decimal erroId = 0;
 
-                // O erro pode ter acontecido antes da criação do container.
-                if (privateCertRepository != null)
-                {
-                    erroId = privateCertRepository.InsertError(new Log(e.Exception));
-                }
+        //        // O erro pode ter acontecido antes da criação do container.
+        //        if (privateCertRepository != null)
+        //        {
+        //            erroId = privateCertRepository.InsertError(new Log(e.Exception));
+        //        }
 
-                MessageBoxHelper.ShowErrorMessage(
-                    "Infelizmente ocorreu um erro na aplicação." + Environment.NewLine + Environment.NewLine +
-                    "Por favor, entre em contato com a equipe de suporte informando o código para facilitar a identificação do problema: " +
-                    erroId);
-            }
-            catch (Exception ex)
-            {
-                try
-                {
-                    MessageBoxHelper.ShowErrorMessage(
-                        "Ocorreu um erro no sistema e ele será finalizado." + Environment.NewLine + Environment.NewLine +
-                        "Por favor, entre em contato com a equipe de suporte informando a mensagem abaixo." +
-                        Environment.NewLine + ex.Message);
-                }
-                finally
-                {
-                    Current.Shutdown(1);
-                }
-            }
-        }
+        //        MessageBoxHelper.ShowErrorMessage(
+        //            "Infelizmente ocorreu um erro na aplicação." + Environment.NewLine + Environment.NewLine +
+        //            "Por favor, entre em contato com a equipe de suporte informando o código para facilitar a identificação do problema: " +
+        //            erroId);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        try
+        //        {
+        //            MessageBoxHelper.ShowErrorMessage(
+        //                "Ocorreu um erro no sistema e ele será finalizado." + Environment.NewLine + Environment.NewLine +
+        //                "Por favor, entre em contato com a equipe de suporte informando a mensagem abaixo." +
+        //                Environment.NewLine + ex.Message);
+        //        }
+        //        finally
+        //        {
+        //            Current.Shutdown(1);
+        //        }
+        //    }
+        //}
 
         // Handle the UI exceptions by showing a dialog box, and asking the user whether
         // or not they wish to abort execution.
@@ -71,27 +71,18 @@ namespace PrivateCert.WinUI
         {
             try
             {
-                decimal erroId = 0;
-
                 // O erro pode ter acontecido antes da criação do container.
-                if (privateCertRepository != null)
-                {
-                    erroId = privateCertRepository.InsertError(new Log(e.ExceptionObject as Exception));
-                }
+                privateCertRepository?.InsertError(new Log(e.ExceptionObject as Exception));
 
                 MessageBoxHelper.ShowErrorMessage(
-                    "Infelizmente ocorreu um erro na aplicação." + Environment.NewLine + Environment.NewLine +
-                    "Por favor, entre em contato com a equipe de suporte informando o código para facilitar a identificação do problema: " +
-                    erroId);
+                    "An unknown error occurred. Please, see log file for more details.");
             }
             catch (Exception exc)
             {
                 try
                 {
                     MessageBoxHelper.ShowErrorMessage(
-                        "Ocorreu um erro desconhecido no sistema e ele será finalizado." + Environment.NewLine +
-                        Environment.NewLine +
-                        "Por favor, entre em contato com a equipe de suporte informando a mensagem abaixo." +
+                        "An unknown error occurred. Please, see log file for more details." +
                         Environment.NewLine + exc.Message);
                 }
                 finally

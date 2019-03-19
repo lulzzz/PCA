@@ -10,15 +10,18 @@
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_Certificates">
                 <MenuItem Header="_New" >
-                    <MenuItem Header="_Root" Click="menuNewRoot_Click" />
+                    <MenuItem Header="_Root" Click="MenuNewRoot_Click" />
                     <MenuItem Header="_Intermediate" Click="MenuNewIntermediate_Click" />
-                    <MenuItem Header="End-_User" Click="MenuNewEndUser_Click" />
+                    <MenuItem Header="End-_User" >
+                        <MenuItem Header="_Server" Click="MenuNewServer_Click"/>
+                        <MenuItem Header="_Client" Click="MenuNewClient_Click"/>
+                    </MenuItem>
                 </MenuItem>
                 <MenuItem Header="_List" Click="MenuList_Click" />
-                <Separator />
-                <MenuItem Header="_Exit" Click="MenuExit_Click" />
-            </MenuItem>
-            <MenuItem Header="_MasterKey">
+                    <Separator />
+                    <MenuItem Header="_Exit" Click="MenuExit_Click" />
+                </MenuItem>
+                <MenuItem Header="_MasterKey">
                 <MenuItem Header="_Change" Click="MenuSetMasterKey_Click" />
             </MenuItem>
         </Menu>

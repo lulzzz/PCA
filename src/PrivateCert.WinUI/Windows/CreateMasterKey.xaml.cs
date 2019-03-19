@@ -25,6 +25,8 @@ namespace PrivateCert.WinUI.Windows
                 return;
             }
 
+            App.MasterKeyDecrypted = pwdPassword.Password;
+
             DialogResult = true;
             this.Close();
         }

@@ -1,0 +1,57 @@
+﻿<base:BaseWindow x:Class="PrivateCert.WinUI.Windows.CreateServerCertificate"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PrivateCert.Lib.Features;assembly=PrivateCert.Lib"
+        xmlns:base="clr-namespace:PrivateCert.WinUI.Infrastructure"
+        mc:Ignorable="d"
+        Title="Create Server Certificate" 
+        Height="350" 
+        Width="536.094" 
+        ResizeMode="NoResize" 
+        WindowStartupLocation="CenterOwner" Loaded="Window_Loaded" d:DataContext="{d:DesignInstance local:CreateServerCertificate+ViewModel}">
+    <Grid Margin="10">
+        <Grid.Resources>
+            <Style TargetType="TextBlock">
+                <Setter Property="Padding" Value="0,2,0,0"></Setter>
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="Height" Value="23"></Setter>
+            </Style>
+            <Style TargetType="Button">
+                <Setter Property="Height" Value="23"></Setter>
+                <Setter Property="Width" Value="75"></Setter>
+            </Style>
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top"><Run Text="Insert the URL without 'https"/><Run Text="://'"/><Run Text="."/></TextBlock>
+
+        <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock Width="150">URL (Issuer Name)</TextBlock>
+            <TextBox Name="txtCountry" Text="{Binding IssuerName}" Width="300" />
+        </StackPanel>
+        <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock Width="150">Expiration Date (Days)</TextBlock>
+            <TextBox Name="txtExpiration" Text="{Binding ExpirationDateInDays}" Width="50"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+            <Button Name="btnCreate" Content="Create" HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="5,0"  Click="BtnCreate_Click" IsDefault="True"  />
+            <Button Name="btnCancel" Content="Cancel" HorizontalAlignment="Left" VerticalAlignment="Top"  Click="BtnCancel_Click"    />
+        </StackPanel>
+    </Grid>
+</base:BaseWindow>

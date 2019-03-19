@@ -88,7 +88,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Features\BaseValidator.cs" />
-    <Compile Include="Features\CreateEndUserCertificate.cs" />
+    <Compile Include="Features\CreateClientCertificate.cs" />
+    <Compile Include="Features\CreateServerCertificate.cs" />
     <Compile Include="Features\CreateIntermediateCertificate.cs" />
     <Compile Include="Features\CreateMasterKey.cs" />
     <Compile Include="Features\CreateRootCertificate.cs" />
