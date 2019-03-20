@@ -11,7 +11,7 @@
             <MenuItem Header="_Certificates">
                 <MenuItem Header="_New" >
                     <MenuItem Header="_Root" Click="MenuNewRoot_Click" />
-                    <MenuItem Header="_Intermediate" Click="MenuNewIntermediate_Click" />
+                    <!--<MenuItem Header="_Intermediate" Click="MenuNewIntermediate_Click" />-->
                     <MenuItem Header="End-_User" >
                         <MenuItem Header="_Server" Click="MenuNewServer_Click"/>
                         <MenuItem Header="_Client" Click="MenuNewClient_Click"/>

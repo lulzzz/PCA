@@ -38,6 +38,8 @@ namespace PrivateCert.Lib.Features
             public string FirstCRL { get; set; }
             public string SecondCRL { get; set; }
             public string ThirdCRL { get; set; }
+            public string FirstP7B { get; set; }
+            public string SecondP7B { get; set; }
             public int ExpirationDateInYears { get; set; }
         }
 
@@ -58,6 +60,7 @@ namespace PrivateCert.Lib.Features
                 AddCRL(viewModel.FirstCRL);
                 AddCRL(viewModel.SecondCRL);
                 AddCRL(viewModel.ThirdCRL);
+                Addl
             }
 
             private void AddCRL(string url)

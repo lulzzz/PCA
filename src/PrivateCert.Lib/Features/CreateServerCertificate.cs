@@ -1,6 +1,8 @@
 ﻿using FluentValidation;
 using FluentValidation.Results;
+using PrivateCert.Lib.Infrastructure;
 using PrivateCert.Lib.Interfaces;
+using PrivateCert.Lib.Model;
 
 namespace PrivateCert.Lib.Features
 {
@@ -12,6 +14,8 @@ namespace PrivateCert.Lib.Features
 
         public class ViewModel : IValidationResult
         {
+            public int CertificateRootId { get; set; }
+
             public int ExpirationDateInDays { get; set; }
 
             public string IssuerName { get; set; }
@@ -54,6 +58,8 @@ namespace PrivateCert.Lib.Features
                 ExpirationDateInDays = viewModel.ExpirationDateInDays;
             }
 
+            public int RootCertificateId { get; }
+
             public int ExpirationDateInDays { get; }
 
             public string IssuerName { get; }
@@ -68,10 +74,14 @@ namespace PrivateCert.Lib.Features
         public class CommandHandler
         {
             private readonly CommandValidator commandValidator;
+            private readonly IPrivateCertRepository privateCertRepository;
+            private readonly IUnitOfWork unitOfWork;
 
-            public CommandHandler(CommandValidator commandValidator)
+            public CommandHandler(CommandValidator commandValidator, IPrivateCertRepository privateCertRepository, IUnitOfWork unitOfWork)
             {
                 this.commandValidator = commandValidator;
+                this.privateCertRepository = privateCertRepository;
+                this.unitOfWork = unitOfWork;
             }
 
             public ValidationResult Handle(Command command)
@@ -81,6 +91,12 @@ namespace PrivateCert.Lib.Features
                 {
                     return result;
                 }
+
+                var passphrase = privateCertRepository.GetPassphrase();
+                var passphraseDecrypted = StringCipher.Decrypt(passphrase, command.MasterKeyDecrypted);
+                var certificate = Certificate.CreateServerCertificate(command, passphraseDecrypted);
+                privateCertRepository.AddRootCertificate(certificate);
+                unitOfWork.SaveChanges();
 
                 return result;
             }

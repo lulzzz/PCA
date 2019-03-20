@@ -38,7 +38,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top"><Run Text="Insert the URL without 'https"/><Run Text="://'"/><Run Text="."/></TextBlock>
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top"><Run Text="Insert the URL without 'https"/><Run Text="://'"/><Run Text="."/> You can use wildcard to generate this certificate.</TextBlock>
 
         <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
             <TextBlock Width="150">URL (Issuer Name)</TextBlock>

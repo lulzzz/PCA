@@ -36,7 +36,7 @@ namespace PrivateCert.WinUI.Windows
         {
             DataContext = new Lib.Features.CreateServerCertificate.ViewModel()
             {
-                IssuerName = "serverhost.domain.com",
+                IssuerName = "serverhost.domain.com ou *.domain.com",
                 ExpirationDateInDays = 360
             };
             txtCountry.Focus();

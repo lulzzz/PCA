@@ -1,5 +1,23 @@
-﻿using FluentValidation;
+﻿using System;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using FluentValidation;
 using FluentValidation.Results;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Pkcs;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Operators;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Prng;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.OpenSsl;
+using Org.BouncyCastle.Pkcs;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Utilities;
+using Org.BouncyCastle.X509;
+using Org.BouncyCastle.X509.Extension;
 using PrivateCert.Lib.Interfaces;
 
 namespace PrivateCert.Lib.Features
@@ -55,9 +73,9 @@ namespace PrivateCert.Lib.Features
                 MasterKeyDecrypted = masterKeyDecrypted;
             }
 
-            public string MasterKeyDecrypted { get; private set; }
+            public string MasterKeyDecrypted { get; }
 
-            public ViewModel ViewModel { get; private set; }
+            public ViewModel ViewModel { get; }
         }
 
         public class CommandValidator : AbstractValidator<Command>
@@ -71,6 +89,23 @@ namespace PrivateCert.Lib.Features
             public CommandHandler(CommandValidator commandValidator)
             {
                 this.commandValidator = commandValidator;
+            }
+
+
+            private static void AddRevocationUrlsFromIssuer(
+                X509V3CertificateGenerator certificateGenerator,
+                X509Certificate2 issuerCertificate)
+            {
+                foreach (var extension in issuerCertificate.Extensions)
+                {
+                    if (extension.Oid.Value == new Oid(X509Extensions.CrlDistributionPoints.Id).Value)
+                    {
+                        var extObj = Asn1Object.FromByteArray(extension.RawData);
+                        var clrDistPoint = CrlDistPoint.GetInstance(extObj);
+
+                        certificateGenerator.AddExtension(X509Extensions.CrlDistributionPoints, false, clrDistPoint);
+                    }
+                }
             }
 
             public ValidationResult Handle(Command command)
