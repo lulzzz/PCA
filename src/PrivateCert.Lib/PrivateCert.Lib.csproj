@@ -104,6 +104,7 @@
     <Compile Include="Interfaces\IPrivateCertRepository.cs" />
     <Compile Include="Interfaces\IUnitOfWork.cs" />
     <Compile Include="Interfaces\IValidationResult.cs" />
+    <Compile Include="Model\AuthorityData.cs" />
     <Compile Include="Model\Certificate.cs" />
     <Compile Include="Model\CertificateTypeEnum.cs" />
     <Compile Include="Model\Log.cs" />

@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Collections.Generic;
+using AutoMapper;
 using PrivateCert.Sqlite.Model;
 
 namespace PrivateCert.Sqlite.Infrastructure
@@ -9,6 +10,11 @@ namespace PrivateCert.Sqlite.Infrastructure
         {
             CreateMap<Log, Lib.Model.Log>();
             CreateMap<Certificate, Lib.Model.Certificate>();
+            CreateMap<AuthorityData, Lib.Model.AuthorityData>();
+
+            CreateMap<Lib.Model.Certificate, Certificate>();
+            CreateMap<Lib.Model.AuthorityData, AuthorityData>();
+
         }
     }
 }

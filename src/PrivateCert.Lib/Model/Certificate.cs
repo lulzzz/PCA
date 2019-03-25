@@ -27,7 +27,7 @@ namespace PrivateCert.Lib.Model
         public static Certificate CreateRootCertificate(CreateRootCertificate.Command command, string passphraseDecrypted)
         {
             var rootDN = $"C={command.Country},O={command.Organization},OU={command.OrganizationUnit},CN=" + command.SubjectName.Trim();
-            var x509 = GenerateRootCertificate(rootDN, command.CRLs);
+            var x509 = GenerateRootCertificate(rootDN, command.ExpirationDateInYears, command.CRLs);
             var certificate = new Certificate()
             {
                 ExpirationDate = x509.NotAfter,
@@ -39,6 +39,32 @@ namespace PrivateCert.Lib.Model
             };
 
             certificate.PfxData = x509.Export(X509ContentType.Pfx, passphraseDecrypted);
+            if (command.P7Bs.Count > 0)
+            {
+                certificate.AuthorityData = new AuthorityData() {FirstP7B = command.FirstP7B, SecondP7B = command.SecondP7B};
+            }
+
+            return certificate;
+        }
+
+        public static Certificate CreateServerCertificate(CreateServerCertificate.Command command, Certificate authorityCertificate, string passphraseDecrypted)
+        {
+            var x509AuthorityCertificate = new X509Certificate2();
+            x509AuthorityCertificate.Import(authorityCertificate.PfxData,passphraseDecrypted,X509KeyStorageFlags.DefaultKeySet);
+            var rootDN = x509AuthorityCertificate.GetNameInfo(X509NameType.DnsName) $"C={command.Country},O={command.Organization},OU={command.OrganizationUnit},CN=" + command.SubjectName.Trim();
+            var x509 = GenerateServerCertificate(rootDN, command.ExpirationDateInDays, x509AuthorityCertificate, authorityCertificate.AuthorityData.P7Bs, command.IssuerName);
+            var certificate = new Certificate()
+            {
+                ExpirationDate = x509.NotAfter,
+                CertificateType = CertificateTypeEnum.Root,
+                SerialNumber = x509.SerialNumber,
+                Name = x509.GetNameInfo(X509NameType.SimpleName, false),
+                Thumbprint = x509.Thumbprint,
+                IssueDate = x509.NotBefore,
+            };
+
+            certificate.PfxData = x509.Export(X509ContentType.Pfx, passphraseDecrypted);
+
             return certificate;
         }
 
@@ -66,7 +92,13 @@ namespace PrivateCert.Lib.Model
 
         public byte[] PfxData { get; private set;}
 
-        private static X509Certificate2 GenerateRootCertificate(string subjectName, ICollection<string> crlUrls, int keyStrength = 2048)
+        public AuthorityData AuthorityData { get; private set; }
+
+        public int? AuthorityId { get; private set; }
+
+        public Certificate Authority { get; private set; }
+
+        private static X509Certificate2 GenerateRootCertificate(string subjectName, int expirationDateInYears, ICollection<string> crlUrls, int keyStrength = 2048)
         {
             // Generating Random Numbers
             var randomGenerator = new CryptoApiRandomGenerator();
@@ -89,7 +121,7 @@ namespace PrivateCert.Lib.Model
 
             // Valid For
             var notBefore = DateTime.UtcNow;
-            var notAfter = notBefore.AddYears(20);
+            var notAfter = notBefore.AddYears(expirationDateInYears);
 
             certificateGenerator.SetNotBefore(notBefore);
             certificateGenerator.SetNotAfter(notAfter);
@@ -148,17 +180,103 @@ namespace PrivateCert.Lib.Model
             return x509;
         }
 
-        public static X509Certificate2 CreateServerCertificate(CreateServerCertificate.Command command, X509Certificate2 rootCertificate, string passphraseDecrypted)
+        private static X509Certificate2 GenerateServerCertificate(string subjectName, int expirationDateInDays, X509Certificate2 issuerCertificate, ICollection<string> p7bUrls, string siteName, int keyStrength = 2048)
         {
-            // Geração do certificado
-            var name = command.IssuerName.Trim();
+            var issuerPrivKey = DotNetUtilities.GetKeyPair(issuerCertificate.PrivateKey).Private;
+            var issuerPublicKey = DotNetUtilities.GetKeyPair(issuerCertificate.PrivateKey).Public;
 
-            var userDN = $"{rootCertificate.GetNameInfo(X509NameType.DnsName, false)},CN=" + name;
-            var userRepository = new UserRepository(context);
-            var p7bUrlPrefixes = userRepository.GetDbSettingString("P7bUrlPrefixes").Split('|');
+            // Generating Random Numbers
+            var randomGenerator = new CryptoApiRandomGenerator();
+            var random = new SecureRandom(randomGenerator);
+
+            // The Certificate Generator
+            var certificateGenerator = new X509V3CertificateGenerator();
+
+            // Serial Number
+            var serialNumber = BigIntegers.CreateRandomInRange(BigInteger.One, BigInteger.ValueOf(long.MaxValue), random);
+            certificateGenerator.SetSerialNumber(serialNumber);
+
+            // Issuer and Subject Name
+            var subjectDN = new X509Name(subjectName);
+
+            // O nome do emissor precisa ser invertido. Por algum motivo estranho, o nome do emissor ficar invertido ao nome do emissor no certificado raiz. 
+            // O aplicativo certutil acaba reclamando disso. Ao inverter o nome, os dois ficam corretos no programa e ele não reclama. 
+            // Como isso pode ser um ponto de problema, achei melhor fazer essa adaptação. (Paulo)
+            var issuerName = issuerCertificate.IssuerName.Name;
+            var issuerNameElements = issuerName.Split(',');
+            Array.Reverse(issuerNameElements);
+            var issuerDN = new X509Name(string.Join(",", issuerNameElements));
+            certificateGenerator.SetIssuerDN(issuerDN);
+            certificateGenerator.SetSubjectDN(subjectDN);
+
+            // Valid For
+            certificateGenerator.SetNotBefore(DateTime.Now.ToUniversalTime());
+            var expirationDate = DateTime.Now.AddDays(expirationDateInDays);
+            certificateGenerator.SetNotAfter(expirationDate.ToUniversalTime());
+
+            // Subject Public Key
+            var keyGenerationParameters = new KeyGenerationParameters(random, keyStrength);
+            var keyPairGenerator = new RsaKeyPairGenerator();
+            keyPairGenerator.Init(keyGenerationParameters);
+            var subjectKeyPair = keyPairGenerator.GenerateKeyPair();
+
+            certificateGenerator.SetPublicKey(subjectKeyPair.Public);
+
+            // Informações adicionais para encontrar a cadeia.
+            certificateGenerator.AddExtension(
+                X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifierStructure(issuerPublicKey));
+            certificateGenerator.AddExtension(
+                X509Extensions.SubjectKeyIdentifier, false, new SubjectKeyIdentifierStructure(subjectKeyPair.Public));
+
+            // Adiciona caminhos de CRL do certificado raiz
+            AddRevocationUrlsFromIssuer(certificateGenerator, issuerCertificate);
+
+            AddP7bUrls(certificateGenerator, p7bUrls);
+
+            // Informações adicionais para definir a finalidade do certificado.
+            certificateGenerator.AddExtension(
+                X509Extensions.KeyUsage, true,
+                new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment | KeyUsage.NonRepudiation));
+
+            certificateGenerator.AddExtension(
+                X509Extensions.ExtendedKeyUsage, false,
+                new ExtendedKeyUsage(KeyPurposeID.IdKPServerAuth, KeyPurposeID.IdKPClientAuth));
+
+            certificateGenerator.AddExtension(
+                X509Extensions.SubjectAlternativeName, false,
+                new GeneralNames(new GeneralName(GeneralName.DnsName, siteName)));
+
+            certificateGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(false));
+
+            // SSL Certificate 
+            ISignatureFactory signatureFactory = new Asn1SignatureFactory("SHA256WithRSA", issuerPrivKey, random);
+            var certificate = certificateGenerator.Generate(signatureFactory);
+
+            // correcponding private key
+            var info = PrivateKeyInfoFactory.CreatePrivateKeyInfo(subjectKeyPair.Private);
+
+            // merge into X509Certificate2
+            var x509 = new X509Certificate2(certificate.GetEncoded());
+
+            var seq = (Asn1Sequence)Asn1Object.FromByteArray(info.ParsePrivateKey().GetDerEncoded());
+            if (seq.Count != 9)
+            {
+                throw new PemException("malformed sequence in RSA private key");
+            }
+
+            var rsa = RsaPrivateKeyStructure.GetInstance(seq);
+            var rsaparams = new RsaPrivateCrtKeyParameters(
+                rsa.Modulus, rsa.PublicExponent, rsa.PrivateExponent, rsa.Prime1, rsa.Prime2, rsa.Exponent1, rsa.Exponent2,
+                rsa.Coefficient);
+
+            x509.PrivateKey = DotNetUtilities.ToRSA(rsaparams);
+            x509.FriendlyName = subjectDN.GetValueList()[subjectDN.GetValueList().Count - 1].ToString();
+            return x509;
         }
 
-        private static X509Certificate2 GenerateSslCertificate(string subjectName, DateTime now, DateTime expirationDate, X509Certificate2 issuerCertificate, int versaoCertificadoRaiz, string[] p7bUrlPrefixes, string siteName, int keyStrength = 2048)
+        public static X509Certificate2 GenerateClientCertificate(
+            string subjectName, DateTime now, DateTime expirationDate, X509Certificate2 issuerCertificate,
+            int versaoCertificadoRaiz, string[] p7bUrlPrefixes, string upnName, int keyStrength = 2048)
         {
             var issuerPrivKey = DotNetUtilities.GetKeyPair(issuerCertificate.PrivateKey).Private;
             var issuerPublicKey = DotNetUtilities.GetKeyPair(issuerCertificate.PrivateKey).Public;
@@ -217,11 +335,18 @@ namespace PrivateCert.Lib.Model
 
             certificateGenerator.AddExtension(
                 X509Extensions.ExtendedKeyUsage, false,
-                new ExtendedKeyUsage(KeyPurposeID.IdKPServerAuth, KeyPurposeID.IdKPClientAuth));
+                new ExtendedKeyUsage(
+                    KeyPurposeID.IdKPClientAuth, KeyPurposeID.IdKPSmartCardLogon, KeyPurposeID.IdKPCodeSigning));
 
-            certificateGenerator.AddExtension(
-                X509Extensions.SubjectAlternativeName, false,
-                new GeneralNames(new GeneralName(GeneralName.DnsName, siteName)));
+            Asn1EncodableVector otherName = new Asn1EncodableVector();
+            otherName.Add(new DerObjectIdentifier("1.3.6.1.4.1.311.20.2.3"));
+            otherName.Add(new DerTaggedObject(true, GeneralName.OtherName, new DerUtf8String(upnName)));
+            Asn1Object upn = new DerTaggedObject(false, 0, new DerSequence(otherName));
+            Asn1EncodableVector generalNames = new Asn1EncodableVector();
+            generalNames.Add(upn);
+
+            // Adding extension to X509V3CertificateGenerator
+            certificateGenerator.AddExtension(X509Extensions.SubjectAlternativeName, false, new DerSequence(generalNames));
 
             certificateGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(false));
 
@@ -235,7 +360,7 @@ namespace PrivateCert.Lib.Model
             // merge into X509Certificate2
             var x509 = new X509Certificate2(certificate.GetEncoded());
 
-            var seq = (Asn1Sequence)Asn1Object.FromByteArray(info.ParsePrivateKey().GetDerEncoded());
+            var seq = (Asn1Sequence) Asn1Object.FromByteArray(info.ParsePrivateKey().GetDerEncoded());
             if (seq.Count != 9)
             {
                 throw new PemException("malformed sequence in RSA private key");
@@ -251,112 +376,8 @@ namespace PrivateCert.Lib.Model
             return x509;
         }
 
-
-            public static X509Certificate2 GenerateClientCertificate(
-                string subjectName, DateTime now, DateTime expirationDate, X509Certificate2 issuerCertificate,
-                int versaoCertificadoRaiz, string[] p7bUrlPrefixes, string upnName, int keyStrength = 2048)
-            {
-                var issuerPrivKey = DotNetUtilities.GetKeyPair(issuerCertificate.PrivateKey).Private;
-                var issuerPublicKey = DotNetUtilities.GetKeyPair(issuerCertificate.PrivateKey).Public;
-
-                // Generating Random Numbers
-                var randomGenerator = new CryptoApiRandomGenerator();
-                var random = new SecureRandom(randomGenerator);
-
-                // The Certificate Generator
-                var certificateGenerator = new X509V3CertificateGenerator();
-
-                // Serial Number
-                var serialNumber = BigIntegers.CreateRandomInRange(BigInteger.One, BigInteger.ValueOf(long.MaxValue), random);
-                certificateGenerator.SetSerialNumber(serialNumber);
-
-                // Issuer and Subject Name
-                var subjectDN = new X509Name(subjectName);
-
-                // O nome do emissor precisa ser invertido. Por algum motivo estranho, o nome do emissor ficar invertido ao nome do emissor no certificado raiz. 
-                // O aplicativo certutil acaba reclamando disso. Ao inverter o nome, os dois ficam corretos no programa e ele não reclama. 
-                // Como isso pode ser um ponto de problema, achei melhor fazer essa adaptação. (Paulo)
-                var issuerName = issuerCertificate.IssuerName.Name;
-                var issuerNameElements = issuerName.Split(',');
-                Array.Reverse(issuerNameElements);
-                var issuerDN = new X509Name(string.Join(",", issuerNameElements));
-                certificateGenerator.SetIssuerDN(issuerDN);
-                certificateGenerator.SetSubjectDN(subjectDN);
-
-                // Valid For
-                certificateGenerator.SetNotBefore(now.ToUniversalTime());
-                certificateGenerator.SetNotAfter(expirationDate.ToUniversalTime());
-
-                // Subject Public Key
-                var keyGenerationParameters = new KeyGenerationParameters(random, keyStrength);
-                var keyPairGenerator = new RsaKeyPairGenerator();
-                keyPairGenerator.Init(keyGenerationParameters);
-                var subjectKeyPair = keyPairGenerator.GenerateKeyPair();
-
-                certificateGenerator.SetPublicKey(subjectKeyPair.Public);
-
-                // Informações adicionais para encontrar a cadeia.
-                certificateGenerator.AddExtension(
-                    X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifierStructure(issuerPublicKey));
-                certificateGenerator.AddExtension(
-                    X509Extensions.SubjectKeyIdentifier, false, new SubjectKeyIdentifierStructure(subjectKeyPair.Public));
-
-                // Adiciona caminhos de CRL do certificado raiz
-                AddRevocationUrlsFromIssuer(certificateGenerator, issuerCertificate);
-
-                AddP7bUrls(versaoCertificadoRaiz, certificateGenerator, p7bUrlPrefixes);
-
-                // Informações adicionais para definir a finalidade do certificado.
-                certificateGenerator.AddExtension(
-                    X509Extensions.KeyUsage, true,
-                    new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment | KeyUsage.NonRepudiation));
-
-                certificateGenerator.AddExtension(
-                    X509Extensions.ExtendedKeyUsage, false,
-                    new ExtendedKeyUsage(
-                        KeyPurposeID.IdKPClientAuth, KeyPurposeID.IdKPSmartCardLogon, KeyPurposeID.IdKPCodeSigning));
-
-                Asn1EncodableVector otherName = new Asn1EncodableVector();
-                otherName.Add(new DerObjectIdentifier("1.3.6.1.4.1.311.20.2.3"));
-                otherName.Add(new DerTaggedObject(true, GeneralName.OtherName, new DerUtf8String(upnName)));
-                Asn1Object upn = new DerTaggedObject(false, 0, new DerSequence(otherName));
-                Asn1EncodableVector generalNames = new Asn1EncodableVector();
-                generalNames.Add(upn);
-
-                // Adding extension to X509V3CertificateGenerator
-                certificateGenerator.AddExtension(X509Extensions.SubjectAlternativeName, false, new DerSequence(generalNames));
-
-                certificateGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(false));
-
-                // SSL Certificate 
-                ISignatureFactory signatureFactory = new Asn1SignatureFactory("SHA256WithRSA", issuerPrivKey, random);
-                var certificate = certificateGenerator.Generate(signatureFactory);
-
-                // correcponding private key
-                var info = PrivateKeyInfoFactory.CreatePrivateKeyInfo(subjectKeyPair.Private);
-
-                // merge into X509Certificate2
-                var x509 = new X509Certificate2(certificate.GetEncoded());
-
-                var seq = (Asn1Sequence) Asn1Object.FromByteArray(info.ParsePrivateKey().GetDerEncoded());
-                if (seq.Count != 9)
-                {
-                    throw new PemException("malformed sequence in RSA private key");
-                }
-
-                var rsa = RsaPrivateKeyStructure.GetInstance(seq);
-                var rsaparams = new RsaPrivateCrtKeyParameters(
-                    rsa.Modulus, rsa.PublicExponent, rsa.PrivateExponent, rsa.Prime1, rsa.Prime2, rsa.Exponent1, rsa.Exponent2,
-                    rsa.Coefficient);
-
-                x509.PrivateKey = DotNetUtilities.ToRSA(rsaparams);
-                x509.FriendlyName = subjectDN.GetValueList()[subjectDN.GetValueList().Count - 1].ToString();
-                return x509;
-            }
-
-        private static void AddP7bUrls(int versao, X509V3CertificateGenerator certificateGenerator, string[] p7bUrlPrefixes)
+        private static void AddP7bUrls(X509V3CertificateGenerator certificateGenerator, ICollection<string> p7bUrlPrefixes)
         {
-            var versionInfo = string.Format("/v{0}/chain.p7b", versao);
             var descriptions = new List<AccessDescription>();
 
             int count = 1;
@@ -371,7 +392,7 @@ namespace PrivateCert.Lib.Model
 
                 var description = new AccessDescription(
                     X509ObjectIdentifiers.IdADCAIssuers,
-                    new GeneralName(GeneralName.UniformResourceIdentifier, certificatesPrefix + versionInfo));
+                    new GeneralName(GeneralName.UniformResourceIdentifier, certificatesPrefix));
                 descriptions.Add(description);
 
                 count ++;

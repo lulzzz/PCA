@@ -41,15 +41,23 @@
         <TextBlock Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top"><Run Text="Insert the URL without 'https"/><Run Text="://'"/><Run Text="."/> You can use wildcard to generate this certificate.</TextBlock>
 
         <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
+            <TextBlock Width="150">Root</TextBlock>
+            <ComboBox Name="ddlRoot"
+                      ItemsSource="{Binding Path=AuthorityCertificates}"
+                      DisplayMemberPath="Name"
+                      SelectedValuePath="CertificateId"
+                      SelectedValue="{Binding Path=SelectedAuthorityCertificateId}" />
+        </StackPanel>
+        <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal">
             <TextBlock Width="150">URL (Issuer Name)</TextBlock>
             <TextBox Name="txtCountry" Text="{Binding IssuerName}" Width="300" />
         </StackPanel>
-        <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal">
+        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal">
             <TextBlock Width="150">Expiration Date (Days)</TextBlock>
             <TextBox Name="txtExpiration" Text="{Binding ExpirationDateInDays}" Width="50"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+        <StackPanel Grid.Row="4" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
             <Button Name="btnCreate" Content="Create" HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="5,0"  Click="BtnCreate_Click" IsDefault="True"  />
             <Button Name="btnCancel" Content="Cancel" HorizontalAlignment="Left" VerticalAlignment="Top"  Click="BtnCancel_Click"    />
         </StackPanel>

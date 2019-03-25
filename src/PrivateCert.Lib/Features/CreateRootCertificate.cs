@@ -1,26 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
 using FluentValidation.Validators;
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Asn1.Pkcs;
-using Org.BouncyCastle.Asn1.X509;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.Operators;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Prng;
-using Org.BouncyCastle.Math;
-using Org.BouncyCastle.OpenSsl;
-using Org.BouncyCastle.Pkcs;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.X509;
-using Org.BouncyCastle.X509.Extension;
 using PrivateCert.Lib.Infrastructure;
 using PrivateCert.Lib.Interfaces;
 using PrivateCert.Lib.Model;
@@ -32,24 +15,30 @@ namespace PrivateCert.Lib.Features
         public class ViewModel
         {
             public string Country { get; set; }
-            public string Organization { get; set; }
-            public string OrganizationUnit { get; set; }
-            public string SubjectName { get; set; }
-            public string FirstCRL { get; set; }
-            public string SecondCRL { get; set; }
-            public string ThirdCRL { get; set; }
-            public string FirstP7B { get; set; }
-            public string SecondP7B { get; set; }
+
             public int ExpirationDateInYears { get; set; }
+
+            public string FirstCRL { get; set; }
+
+            public string FirstP7B { get; set; }
+
+            public string Organization { get; set; }
+
+            public string OrganizationUnit { get; set; }
+
+            public string SecondCRL { get; set; }
+
+            public string SecondP7B { get; set; }
+
+            public string SubjectName { get; set; }
+
+            public string ThirdCRL { get; set; }
         }
 
         public class Command
         {
-            public string MasterKeyDecrypted { get; }
-
             public Command(ViewModel viewModel, string masterKeyDecrypted)
             {
-
                 MasterKeyDecrypted = masterKeyDecrypted;
                 Country = viewModel.Country;
                 Organization = viewModel.Organization;
@@ -57,13 +46,57 @@ namespace PrivateCert.Lib.Features
                 ExpirationDateInYears = viewModel.ExpirationDateInYears;
                 SubjectName = viewModel.SubjectName;
                 CRLs = new List<string>();
-                AddCRL(viewModel.FirstCRL);
-                AddCRL(viewModel.SecondCRL);
-                AddCRL(viewModel.ThirdCRL);
-                Addl
+                P7Bs = new List<string>();
+                AddToList(viewModel.FirstCRL, CRLs);
+                AddToList(viewModel.SecondCRL, CRLs);
+                AddToList(viewModel.ThirdCRL, CRLs);
+                AddToList(viewModel.FirstP7B, P7Bs);
+                AddToList(viewModel.SecondP7B, P7Bs);
             }
 
-            private void AddCRL(string url)
+            public string Country { get; }
+
+            public ICollection<string> CRLs { get; }
+
+            public int ExpirationDateInYears { get; }
+
+            public string MasterKeyDecrypted { get; }
+
+            public string Organization { get; }
+
+            public string OrganizationUnit { get; }
+
+            public ICollection<string> P7Bs { get; }
+
+            public string FirstP7B
+            {
+                get
+                {
+                    if (P7Bs.Count >= 1)
+                    {
+                        return P7Bs.First();
+                    }
+
+                    return null;
+                }
+            }
+
+            public string SecondP7B
+            {
+                get
+                {
+                    if (P7Bs.Count >= 2)
+                    {
+                        return P7Bs.Skip(1).First();
+                    }
+
+                    return null;
+                }
+            }
+
+            public string SubjectName { get; }
+
+            private void AddToList(string url, ICollection<string> list)
             {
                 if (url == null)
                 {
@@ -76,27 +109,20 @@ namespace PrivateCert.Lib.Features
                     return;
                 }
 
-                CRLs.Add(trimmedUrl);
+                list.Add(trimmedUrl);
             }
-
-            public string Country { get; private set; }
-            public string Organization { get; private set; }
-            public string OrganizationUnit { get; private set; }
-            public int ExpirationDateInYears { get; private set; }
-
-            public string SubjectName { get; private set; }
-
-            public ICollection<string> CRLs { get; private set; }
         }
 
         public class CommandHandler
         {
             private readonly IPrivateCertRepository privateCertRepository;
+
             private readonly CommandValidator validator;
 
             private readonly IUnitOfWork unitOfWork;
 
-            public CommandHandler(CommandValidator validator, IPrivateCertRepository privateCertRepository, IUnitOfWork unitOfWork)
+            public CommandHandler(
+                CommandValidator validator, IPrivateCertRepository privateCertRepository, IUnitOfWork unitOfWork)
             {
                 this.validator = validator;
                 this.privateCertRepository = privateCertRepository;
@@ -105,7 +131,8 @@ namespace PrivateCert.Lib.Features
 
             public ValidationResult Handle(Command command)
             {
-                var result  = validator.Validate(command);
+                unitOfWork.BeginTransaction();
+                var result = validator.Validate(command);
                 if (!result.IsValid)
                 {
                     return result;
@@ -114,12 +141,12 @@ namespace PrivateCert.Lib.Features
                 var passphrase = privateCertRepository.GetPassphrase();
                 var passphraseDecrypted = StringCipher.Decrypt(passphrase, command.MasterKeyDecrypted);
                 var certificate = Certificate.CreateRootCertificate(command, passphraseDecrypted);
-                privateCertRepository.AddRootCertificate(certificate);
+                privateCertRepository.AddCertificate(certificate);
                 unitOfWork.SaveChanges();
+                unitOfWork.CommitTransaction();
 
                 return result;
             }
-
         }
 
         public class CommandValidator : AbstractValidator<Command>
@@ -128,22 +155,33 @@ namespace PrivateCert.Lib.Features
             {
                 RuleFor(c => c)
                     .Cascade(CascadeMode.StopOnFirstFailure)
-                    .Must(c=>c.CRLs != null && c.CRLs.Count>0)
+                    .Must(c => c.CRLs != null && c.CRLs.Count > 0)
                     .WithMessage("Must have at least one CRL URL.")
-                    .Custom(CRLMustBeURL);
+                    .Custom(CRLMustBeURL)
+                    .Custom(P7BMustBeURL);
+            }
+
+            private void P7BMustBeURL(Command command, CustomContext customContext)
+            {
+                MustBeURL(command.CRLs, "CRL", customContext);
+            }
+
+            private void MustBeURL(ICollection<string> urls, string list, CustomContext customContext)
+            {
+                foreach (var url in urls)
+                {
+                    var valid = Uri.TryCreate(url, UriKind.Absolute, out var uriResult) &&
+                                (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+                    if (!valid)
+                    {
+                        customContext.AddFailure($"The {list} {url} is not valid.");
+                    }
+                }
             }
 
             private void CRLMustBeURL(Command command, CustomContext customContext)
             {
-                foreach (var crlLink in command.CRLs)
-                {
-                    bool valid = Uri.TryCreate(crlLink, UriKind.Absolute, out var uriResult) 
-                                 && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-                    if (!valid)
-                    {
-                        customContext.AddFailure($"The CRL {crlLink} is not valid.");
-                    }
-                }    
+                MustBeURL(command.P7Bs, "P7B", customContext);
             }
         }
     }

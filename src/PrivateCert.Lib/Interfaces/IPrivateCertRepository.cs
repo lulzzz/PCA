@@ -19,10 +19,12 @@ namespace PrivateCert.Lib.Interfaces
 
         void SetPassphrase(string passphrase);
 
-        void AddRootCertificate(Certificate certificate);
+        void AddCertificate(Certificate certificate);
 
         ICollection<Certificate> GetAllCertificates();
 
         Certificate GetCertificate(int certificateId);
+
+        ICollection<Certificate> GetValidAuthorityCertificates();
     }
 }

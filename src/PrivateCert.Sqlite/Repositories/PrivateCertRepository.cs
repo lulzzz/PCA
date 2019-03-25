@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.SQLite;
 using System.Linq;
 using AutoMapper;
 using PrivateCert.Lib.Interfaces;
-using PrivateCert.Sqlite.Infrastructure;
+using PrivateCert.Lib.Model;
 using Serilog;
 using Serilog.Events;
-using Certificate = PrivateCert.Lib.Model.Certificate;
 using Log = PrivateCert.Lib.Model.Log;
 
 namespace PrivateCert.Sqlite.Repositories
 {
-    public class PrivateCertRepository:IPrivateCertRepository
+    public class PrivateCertRepository : IPrivateCertRepository
     {
         private readonly IPrivateCertContext context;
+
         public PrivateCertRepository(IPrivateCertContext context)
         {
             this.context = context;
@@ -28,7 +26,7 @@ namespace PrivateCert.Sqlite.Repositories
 
         public void InsertError(Log log)
         {
-            var logger = new LoggerConfiguration().WriteTo.RollingFile("logs\\log.txt",LogEventLevel.Error).CreateLogger();
+            var logger = new LoggerConfiguration().WriteTo.RollingFile("logs\\log.txt", LogEventLevel.Error).CreateLogger();
             logger.Error("{B}", log.Message);
         }
 
@@ -48,9 +46,21 @@ namespace PrivateCert.Sqlite.Repositories
             context.Settings.Find("Passphrase").Value = passphrase;
         }
 
-        public void AddRootCertificate(Certificate certificate)
+        public void AddCertificate(Certificate certificate)
         {
+            if (context.Database.CurrentTransaction == null)
+            {
+                throw new InvalidOperationException("Needs an open transaction.");
+            }
+
             var efCertificate = Mapper.Map<Model.Certificate>(certificate);
+            var maxId = context.Database.SqlQuery<int?>("SELECT MAX(CertificateId) FROM Certificates").SingleOrDefault();
+            efCertificate.CertificateId = (maxId ?? 0) + 1;
+            if (efCertificate.AuthorityData != null)
+            {
+                efCertificate.AuthorityData.CertificateId = efCertificate.CertificateId;
+            }
+
             context.Certificates.Add(efCertificate);
         }
 
@@ -58,6 +68,17 @@ namespace PrivateCert.Sqlite.Repositories
         {
             var efCertificate = context.Certificates.Find(certificateId);
             return Mapper.Map<Certificate>(efCertificate);
+        }
+
+        public ICollection<Certificate> GetValidAuthorityCertificates()
+        {
+            var efCertificates = context.Certificates
+                .Where(
+                    c => c.AuthorityId == null && c.ExpirationDate > DateTime.Now && c.IssueDate < DateTime.Now &&
+                         (!c.RevocationDate.HasValue || c.RevocationDate.HasValue && c.RevocationDate < DateTime.Now))
+                .OrderBy(c => c.Name)
+                .ToList();
+            return Mapper.Map<ICollection<Certificate>>(efCertificates);
         }
 
         public ICollection<Certificate> GetAllCertificates()

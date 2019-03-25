@@ -78,6 +78,7 @@
     <Compile Include="Initializer\EFInitializer.cs" />
     <Compile Include="IPrivateCertContext.cs" />
     <Compile Include="Model\Certificate.cs" />
+    <Compile Include="Model\AuthorityData.cs" />
     <Compile Include="Model\CertificateType.cs" />
     <Compile Include="Model\Log.cs" />
     <Compile Include="Model\Setting.cs" />

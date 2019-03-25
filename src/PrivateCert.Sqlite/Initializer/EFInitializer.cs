@@ -17,6 +17,7 @@ namespace PrivateCert.Sqlite.Initializer
             // Initial Script
             ExecuteScript(context, assembly, "PrivateCert.Sqlite.Initializer.Create Database Structure.sql");
 
+
             // Check DB version
             var maxVersion = GetMaxVersion(context);
 

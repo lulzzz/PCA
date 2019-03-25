@@ -8,7 +8,6 @@ namespace PrivateCert.Sqlite.Model
     public partial class Certificate
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int CertificateId { get; set; }
 
         public DateTime ExpirationDate { get; set; }
@@ -33,5 +32,13 @@ namespace PrivateCert.Sqlite.Model
 
         [Required]
         public byte[] PfxData { get; set; }
+
+        public int? AuthorityId { get; set; }
+
+        [ForeignKey("AuthorityId")]
+        public virtual Certificate Authority { get; set; }
+        
+        [ForeignKey("CertificateId")]
+        public virtual AuthorityData AuthorityData { get; set; }
     }
 }

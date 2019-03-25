@@ -1,4 +1,6 @@
-﻿using FluentValidation;
+﻿using System.Collections.Generic;
+using System.Linq;
+using FluentValidation;
 using FluentValidation.Results;
 using PrivateCert.Lib.Infrastructure;
 using PrivateCert.Lib.Interfaces;
@@ -14,11 +16,13 @@ namespace PrivateCert.Lib.Features
 
         public class ViewModel : IValidationResult
         {
-            public int CertificateRootId { get; set; }
-
             public int ExpirationDateInDays { get; set; }
 
             public string IssuerName { get; set; }
+
+            public ICollection<Certificate> AuthorityCertificates { get; set; }
+
+            public int SelectedAuthorityCertificateId { get; set; }
 
             public ValidationResult ValidationResult { get; set; }
         }
@@ -31,9 +35,12 @@ namespace PrivateCert.Lib.Features
         {
             private readonly QueryValidator queryValidator;
 
-            public QueryHandler(QueryValidator queryValidator)
+            private readonly IPrivateCertRepository privateCertRepository;
+
+            public QueryHandler(QueryValidator queryValidator, IPrivateCertRepository privateCertRepository)
             {
                 this.queryValidator = queryValidator;
+                this.privateCertRepository = privateCertRepository;
             }
 
             public ViewModel Handle(Query query)
@@ -44,6 +51,11 @@ namespace PrivateCert.Lib.Features
                 {
                     return viewModel;
                 }
+
+                viewModel.AuthorityCertificates = privateCertRepository.GetValidAuthorityCertificates();
+                viewModel.SelectedAuthorityCertificateId = viewModel.AuthorityCertificates.First().CertificateId;
+                viewModel.ExpirationDateInDays = 720;
+                viewModel.IssuerName = "some.domain.com or *.domain.com";
 
                 return viewModel;
             }
@@ -56,9 +68,10 @@ namespace PrivateCert.Lib.Features
                 MasterKeyDecrypted = masterKeyDecrypted;
                 IssuerName = viewModel.IssuerName;
                 ExpirationDateInDays = viewModel.ExpirationDateInDays;
+                SelectedAuthorityCertificateId = viewModel.SelectedAuthorityCertificateId;
             }
 
-            public int RootCertificateId { get; }
+            public int SelectedAuthorityCertificateId { get; }
 
             public int ExpirationDateInDays { get; }
 
@@ -94,8 +107,9 @@ namespace PrivateCert.Lib.Features
 
                 var passphrase = privateCertRepository.GetPassphrase();
                 var passphraseDecrypted = StringCipher.Decrypt(passphrase, command.MasterKeyDecrypted);
-                var certificate = Certificate.CreateServerCertificate(command, passphraseDecrypted);
-                privateCertRepository.AddRootCertificate(certificate);
+                var parentCertificate = privateCertRepository.GetCertificate(command.SelectedAuthorityCertificateId);
+                var certificate = Certificate.CreateServerCertificate(command, parentCertificate, passphraseDecrypted);
+                //privateCertRepository.AddCertificate(certificate);
                 unitOfWork.SaveChanges();
 
                 return result;

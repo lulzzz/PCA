@@ -6,10 +6,12 @@ namespace PrivateCert.WinUI.Windows
     public partial class CreateServerCertificate : BaseWindow
     {
         private readonly Lib.Features.CreateServerCertificate.CommandHandler createServerCertificateCommandHandler;
+        private readonly Lib.Features.CreateServerCertificate.QueryHandler createServerCertificateQueryHandler;
 
-        public CreateServerCertificate(Lib.Features.CreateServerCertificate.CommandHandler createServerCertificateCommandHandler)
+        public CreateServerCertificate(Lib.Features.CreateServerCertificate.CommandHandler createServerCertificateCommandHandler, Lib.Features.CreateServerCertificate.QueryHandler createServerCertificateQueryHandler)
         {
             this.createServerCertificateCommandHandler = createServerCertificateCommandHandler;
+            this.createServerCertificateQueryHandler = createServerCertificateQueryHandler;
             InitializeComponent();
         }
 
@@ -34,11 +36,15 @@ namespace PrivateCert.WinUI.Windows
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            DataContext = new Lib.Features.CreateServerCertificate.ViewModel()
+            var query = new Lib.Features.CreateServerCertificate.Query();
+            var viewModel = createServerCertificateQueryHandler.Handle(query);
+            if (!viewModel.ValidationResult.IsValid)
             {
-                IssuerName = "serverhost.domain.com ou *.domain.com",
-                ExpirationDateInDays = 360
-            };
+                MessageBoxHelper.ShowErrorMessage(viewModel.ValidationResult.Errors);
+                this.Close();
+            }
+
+            DataContext = viewModel;
             txtCountry.Focus();
         }
     }
