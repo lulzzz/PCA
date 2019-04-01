@@ -91,10 +91,10 @@ namespace PrivateCert.Lib.Features
 
                 var x509 = new X509Certificate2();
                 x509.Import(certificate.PfxData, passphraseDecrypted, X509KeyStorageFlags.Exportable);
-                viewModel.CertificateData = x509.Export(certificate.CertificateType == CertificateTypeEnum.Root ? X509ContentType.Cert : X509ContentType.Pfx);
-                viewModel.Extension = (certificate.CertificateType == CertificateTypeEnum.Root ? ".cer" : ".pxf");
+                viewModel.CertificateData = x509.Export(certificate.CertificateType == CertificateTypeEnum.Root ? X509ContentType.Cert : X509ContentType.Pfx, string.Empty);
+                viewModel.Extension = (certificate.CertificateType == CertificateTypeEnum.Root ? ".cer" : ".pfx");
                 viewModel.ExtensionFilter = (certificate.CertificateType == CertificateTypeEnum.Root ? "Security Certificate (.cer)|*.cer" : "PKCS #12 Certificate (.pfx)|*.pfx");
-                viewModel.FileNameSuggestion = certificate.Name + viewModel.Extension;
+                viewModel.FileNameSuggestion = certificate.Name.Replace("*","_") + viewModel.Extension;
 
                 return viewModel;
             }

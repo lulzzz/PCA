@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Org.BouncyCastle.Asn1;
@@ -50,17 +51,20 @@ namespace PrivateCert.Lib.Model
         public static Certificate CreateServerCertificate(CreateServerCertificate.Command command, Certificate authorityCertificate, string passphraseDecrypted)
         {
             var x509AuthorityCertificate = new X509Certificate2();
-            x509AuthorityCertificate.Import(authorityCertificate.PfxData,passphraseDecrypted,X509KeyStorageFlags.DefaultKeySet);
-            var rootDN = x509AuthorityCertificate.GetNameInfo(X509NameType.DnsName) $"C={command.Country},O={command.Organization},OU={command.OrganizationUnit},CN=" + command.SubjectName.Trim();
-            var x509 = GenerateServerCertificate(rootDN, command.ExpirationDateInDays, x509AuthorityCertificate, authorityCertificate.AuthorityData.P7Bs, command.IssuerName);
+            x509AuthorityCertificate.Import(authorityCertificate.PfxData,passphraseDecrypted,
+                X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+            var rootDN = new CPI.DirectoryServices.DN(x509AuthorityCertificate.Issuer).Parent.RDNs.Select(c=>c.ToString()).Reverse().ToList();
+            var subjectName = string.Join(",",rootDN) + ",CN=" + command.IssuerName;
+            var x509 = GenerateServerCertificate(subjectName, command.ExpirationDateInDays, x509AuthorityCertificate, authorityCertificate.AuthorityData.P7Bs, command.IssuerName);
             var certificate = new Certificate()
             {
                 ExpirationDate = x509.NotAfter,
-                CertificateType = CertificateTypeEnum.Root,
+                CertificateType = CertificateTypeEnum.EndUser,
                 SerialNumber = x509.SerialNumber,
                 Name = x509.GetNameInfo(X509NameType.SimpleName, false),
                 Thumbprint = x509.Thumbprint,
                 IssueDate = x509.NotBefore,
+                AuthorityId = authorityCertificate.CertificateId
             };
 
             certificate.PfxData = x509.Export(X509ContentType.Pfx, passphraseDecrypted);
@@ -276,7 +280,7 @@ namespace PrivateCert.Lib.Model
 
         public static X509Certificate2 GenerateClientCertificate(
             string subjectName, DateTime now, DateTime expirationDate, X509Certificate2 issuerCertificate,
-            int versaoCertificadoRaiz, string[] p7bUrlPrefixes, string upnName, int keyStrength = 2048)
+            string[] p7bUrlPrefixes, string upnName, int keyStrength = 2048)
         {
             var issuerPrivKey = DotNetUtilities.GetKeyPair(issuerCertificate.PrivateKey).Private;
             var issuerPublicKey = DotNetUtilities.GetKeyPair(issuerCertificate.PrivateKey).Public;
@@ -326,7 +330,7 @@ namespace PrivateCert.Lib.Model
             // Adiciona caminhos de CRL do certificado raiz
             AddRevocationUrlsFromIssuer(certificateGenerator, issuerCertificate);
 
-            AddP7bUrls(versaoCertificadoRaiz, certificateGenerator, p7bUrlPrefixes);
+            AddP7bUrls(certificateGenerator, p7bUrlPrefixes);
 
             // Informações adicionais para definir a finalidade do certificado.
             certificateGenerator.AddExtension(

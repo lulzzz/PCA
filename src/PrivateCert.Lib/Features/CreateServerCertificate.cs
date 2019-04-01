@@ -99,6 +99,7 @@ namespace PrivateCert.Lib.Features
 
             public ValidationResult Handle(Command command)
             {
+                unitOfWork.BeginTransaction();
                 var result = commandValidator.Validate(command);
                 if (!result.IsValid)
                 {
@@ -109,8 +110,9 @@ namespace PrivateCert.Lib.Features
                 var passphraseDecrypted = StringCipher.Decrypt(passphrase, command.MasterKeyDecrypted);
                 var parentCertificate = privateCertRepository.GetCertificate(command.SelectedAuthorityCertificateId);
                 var certificate = Certificate.CreateServerCertificate(command, parentCertificate, passphraseDecrypted);
-                //privateCertRepository.AddCertificate(certificate);
+                privateCertRepository.AddCertificate(certificate);
                 unitOfWork.SaveChanges();
+                unitOfWork.CommitTransaction();
 
                 return result;
             }
