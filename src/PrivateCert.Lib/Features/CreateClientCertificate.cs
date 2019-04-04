@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
+using MediatR;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Asn1.X509;
@@ -65,7 +68,7 @@ namespace PrivateCert.Lib.Features
             }
         }
 
-        public class Command
+        public class Command : IRequest<ValidationResult>
         {
             public Command(ViewModel viewModel, string masterKeyDecrypted)
             {
@@ -82,7 +85,7 @@ namespace PrivateCert.Lib.Features
         {
         }
 
-        public class CommandHandler
+        public class CommandHandler : IRequestHandler<Command, ValidationResult>
         {
             private readonly CommandValidator commandValidator;
 
@@ -108,9 +111,9 @@ namespace PrivateCert.Lib.Features
                 }
             }
 
-            public ValidationResult Handle(Command command)
+            public async Task<ValidationResult> Handle(Command command, CancellationToken cancellationToken)
             {
-                var result = commandValidator.Validate(command);
+                var result = await commandValidator.ValidateAsync(command, cancellationToken);
                 if (!result.IsValid)
                 {
                     return result;

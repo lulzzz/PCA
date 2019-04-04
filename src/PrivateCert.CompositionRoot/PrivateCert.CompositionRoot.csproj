@@ -44,6 +44,9 @@
     <Reference Include="FluentValidation, Version=7.0.0.0, Culture=neutral, PublicKeyToken=7de548da2fbae0f0, processorArchitecture=MSIL">
       <HintPath>..\packages\FluentValidation.7.5.2\lib\net45\FluentValidation.dll</HintPath>
     </Reference>
+    <Reference Include="MediatR, Version=6.0.0.0, Culture=neutral, PublicKeyToken=bb9a41a5e8aaa7e2, processorArchitecture=MSIL">
+      <HintPath>..\packages\MediatR.6.0.0\lib\net461\MediatR.dll</HintPath>
+    </Reference>
     <Reference Include="StructureMap, Version=4.6.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\StructureMap.4.6.1\lib\net45\StructureMap.dll</HintPath>
     </Reference>

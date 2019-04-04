@@ -55,7 +55,7 @@ namespace PrivateCert.Lib.Model
                 X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
             var rootDN = new CPI.DirectoryServices.DN(x509AuthorityCertificate.Issuer).Parent.RDNs.Select(c=>c.ToString()).Reverse().ToList();
             var subjectName = string.Join(",",rootDN) + ",CN=" + command.IssuerName;
-            var x509 = GenerateServerCertificate(subjectName, command.ExpirationDateInDays, x509AuthorityCertificate, authorityCertificate.AuthorityData.P7Bs, command.IssuerName);
+            var x509 = GenerateServerCertificate(subjectName, command.ExpirationDateInDays, x509AuthorityCertificate, authorityCertificate.AuthorityData?.P7Bs, command.IssuerName);
             var certificate = new Certificate()
             {
                 ExpirationDate = x509.NotAfter,
@@ -386,23 +386,27 @@ namespace PrivateCert.Lib.Model
 
             int count = 1;
 
-            foreach (var certificatesPrefix in p7bUrlPrefixes)
+            if (p7bUrlPrefixes != null)
             {
-                // X509Chain only validates up to 2 urls. Então não adianta colocar mais do que duas.
-                if (count > 2)
+                foreach (var certificatesPrefix in p7bUrlPrefixes)
                 {
-                    break;
+                    // X509Chain only validates up to 2 urls. Então não adianta colocar mais do que duas.
+                    if (count > 2)
+                    {
+                        break;
+                    }
+
+                    var description = new AccessDescription(
+                        X509ObjectIdentifiers.IdADCAIssuers,
+                        new GeneralName(GeneralName.UniformResourceIdentifier, certificatesPrefix));
+                    descriptions.Add(description);
+
+                    count++;
                 }
 
-                var description = new AccessDescription(
-                    X509ObjectIdentifiers.IdADCAIssuers,
-                    new GeneralName(GeneralName.UniformResourceIdentifier, certificatesPrefix));
-                descriptions.Add(description);
-
-                count ++;
+                certificateGenerator.AddExtension(
+                    X509Extensions.AuthorityInfoAccess, false, new DerSequence(descriptions.ToArray()));
             }
-
-            certificateGenerator.AddExtension(X509Extensions.AuthorityInfoAccess, false, new DerSequence(descriptions.ToArray()));
         }
 
         private static void AddRevocationUrlsFromIssuer(

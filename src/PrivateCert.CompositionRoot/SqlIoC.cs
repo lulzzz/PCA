@@ -4,10 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FluentValidation;
+using MediatR;
+using MediatR.Pipeline;
 using PrivateCert.Lib.Interfaces;
 using PrivateCert.Sqlite;
 using PrivateCert.Sqlite.Repositories;
 using StructureMap;
+using StructureMap.Pipeline;
 
 namespace PrivateCert.CompositionRoot
 {
@@ -36,34 +39,35 @@ namespace PrivateCert.CompositionRoot
             }
 
             containerBase = new Container(
-                c =>
+                cfg =>
                 {
-                    c.ForSingletonOf(typeof(AbstractValidator<>));
+                    cfg.Scan(
+                        scanner =>
+                        {
+                            // Carrega assembly Lib (que contém as interfaces)
+                            scanner.Assembly("PrivateCert.Lib");
+                            scanner.ConnectImplementationsToTypesClosing(typeof(IRequestHandler<,>));
+                            scanner.ConnectImplementationsToTypesClosing(typeof(INotificationHandler<>));
+                        });
 
-                    //c.For<ILogRepositorio>().Use<LogRepositorio<PortalContext>>();
-                    ////c.For<IArquivoRepositorio>().Use<ArquivoRepositorio>();
-                    //c.For<IAppDbSettingsRepositorio>().Use<AppDbSettingsRepositorio>();
-                    ////c.For<ICertidaoNegativaRepositorio>().Use<CertidaoNegativaRepositorio>();
-                    ////c.For<IContainerRepositorio>().Use<ContainerRepositorio>();
-                    ////c.For<IDecisaoRepositorio>().Use<DecisaoRepositorio>();
-                    ////c.For<IInteiroTeorRepositorio>().Use<InteiroTeorRepositorio>();
-                    ////c.For<ISpocRepositorio>().Use<SpocRepositorio>();
-                    ////c.For<IOrgaoRepositorio>().Use<OrgaoRepositorio>();                    
-                    //c.For<IUsuarioRepositorio>().Use<UsuarioRepositorio>();
-                    //c.For<IContrachequeRepositorio>().Use<ContrachequeRepositorio>();
-                    c.ForConcreteType<PrivateCertContext>().Configure.ContainerScoped();
-                    //c.ForConcreteType<UserManagerContext>().Configure.ContainerScoped();
+                    // Mediator
+                    cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestPreProcessorBehavior<,>));
+                    cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(RequestPostProcessorBehavior<,>));
+                    //cfg.For(typeof(IPipelineBehavior<,>)).Add(typeof(GenericPipelineBehavior<,>));
+                    //cfg.For(typeof(IRequestPreProcessor<>)).Add(typeof(GenericRequestPreProcessor<>));
+                    //cfg.For(typeof(IRequestPostProcessor<,>)).Add(typeof(GenericRequestPostProcessor<,>));
+                    cfg.ForConcreteType<Mediator>().Configure.ContainerScoped();
+                    cfg.For<IMediator>().Use(f=>f.GetInstance<Mediator>());
+                    cfg.For<ServiceFactory>().Use<ServiceFactory>(ctx => ctx.GetInstance);
 
-                    c.For<IPrivateCertContext>().Use(f => f.GetInstance<PrivateCertContext>());
-                    c.For<IUnitOfWork>().Use(f => f.GetInstance<PrivateCertContext>());
-                    c.For<IPrivateCertRepository>().Use(f => f.GetInstance<PrivateCertRepository>());
-                    ////c.For<ILogContext>().Use(f => f.GetInstance<PortalContext>());
-                    ////c.For<IProcessoContext>().Use(f => f.GetInstance<PortalContext>());
-                    //c.For<IPortalContext>().Use(f => f.GetInstance<PortalContext>());
-                    ////c.For<IOrgaoContext>().Use(f => f.GetInstance<PortalContext>());
-                    ////c.For<IArquivoContext>().Use(f => f.GetInstance<PortalContext>());
-                    //c.For<IAppSettingsContext>().Use(f => f.GetInstance<PortalContext>());
-                    //c.For<IUsuarioContext>().Use(f => f.GetInstance<PortalContext>());                   
+                    // Validator
+                    cfg.ForSingletonOf(typeof(AbstractValidator<>));
+
+                    // Lib -> Dal
+                    cfg.ForConcreteType<PrivateCertContext>().Configure.ContainerScoped();
+                    cfg.For<IPrivateCertContext>().Use(f => f.GetInstance<PrivateCertContext>());
+                    cfg.For<IUnitOfWork>().Use(f => f.GetInstance<PrivateCertContext>());
+                    cfg.For<IPrivateCertRepository>().Use(f => f.GetInstance<PrivateCertRepository>());
                 });
         }
 

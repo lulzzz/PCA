@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Markup;
+using MediatR;
 using PrivateCert.CompositionRoot;
 using PrivateCert.Lib.Interfaces;
 using PrivateCert.WinUI.Controls;
@@ -13,15 +14,11 @@ namespace PrivateCert.WinUI.Windows
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly IPrivateCertRepository privateCertRepository;
+        private readonly IMediator mediator;
 
-        private readonly Lib.Features.CreateMasterKey.QueryHandler createMasterKeyQueryHandler;
-
-        public MainWindow(
-            IPrivateCertRepository privateCertRepository, Lib.Features.CreateMasterKey.QueryHandler createMasterKeyQueryHandler)
+        public MainWindow(IMediator mediator)
         {
-            this.privateCertRepository = privateCertRepository;
-            this.createMasterKeyQueryHandler = createMasterKeyQueryHandler;
+            this.mediator = mediator;
             InitializeComponent();
         }
 
@@ -75,9 +72,9 @@ namespace PrivateCert.WinUI.Windows
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            var masterKeyQueryResult = createMasterKeyQueryHandler.Handle(new Lib.Features.CreateMasterKey.Query());
+            var masterKeyQueryResult = mediator.Send(new Lib.Features.CreateMasterKey.Query());
 
-            if (masterKeyQueryResult.IsValid)
+            if (masterKeyQueryResult.Result.IsValid)
             {
                 ShowPage<CreateMasterKey>(true, "Application will be closed since master key was not defined.", true);
             }

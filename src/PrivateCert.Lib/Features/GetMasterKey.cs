@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
+using MediatR;
 using PrivateCert.Lib.Infrastructure;
 using PrivateCert.Lib.Interfaces;
 
@@ -12,7 +14,7 @@ namespace PrivateCert.Lib.Features
 {
     public class GetMasterKey
     {
-        public class Query
+        public class Query : IRequest<ValidationResult>
         {
             public Query(string password)
             {
@@ -26,11 +28,11 @@ namespace PrivateCert.Lib.Features
         {
             public QueryValidator(BaseValidator baseValidator)
             {
-                RuleFor(c => c.Password).Must(baseValidator.MasterKeySucessfulyDecrypted).WithMessage("Wrong password.");
+                RuleFor(c => c.Password).MustAsync(baseValidator.MasterKeySucessfulyDecrypted).WithMessage("Wrong password.");
             }
         }
 
-        public class QueryHandler
+        public class QueryHandler : IRequestHandler<Query, ValidationResult>
         {
             private readonly QueryValidator queryValidator;
 
@@ -39,9 +41,9 @@ namespace PrivateCert.Lib.Features
                 this.queryValidator = queryValidator;
             }
 
-            public ValidationResult Handle(Query query)
+            public async Task<ValidationResult> Handle(Query request, CancellationToken cancellationToken)
             {
-                return queryValidator.Validate(query);
+                return await queryValidator.ValidateAsync(request, cancellationToken);
             }
         }
     }

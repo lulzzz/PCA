@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
+using MediatR;
 using PrivateCert.Lib.Interfaces;
 using PrivateCert.Lib.Model;
 
@@ -12,7 +14,7 @@ namespace PrivateCert.Lib.Features
 {
     public class ListCertificates
     {
-        public class Query
+        public class Query : IRequest<ViewModel>
         {
 
         }
@@ -51,7 +53,7 @@ namespace PrivateCert.Lib.Features
             }
         }
 
-        public class QueryHandler
+        public class QueryHandler : IRequestHandler<Query,ViewModel>
         {
             private readonly QueryValidator queryValidator;
 
@@ -63,18 +65,19 @@ namespace PrivateCert.Lib.Features
                 this.privateCertRepository = privateCertRepository;
             }
 
-            public ViewModel Handle(Query query)
+            public async Task<ViewModel> Handle(Query request, CancellationToken cancellationToken)
             {
                 var viewModel = new ViewModel();
-                viewModel.ValidationResult = queryValidator.Validate(query);
+                viewModel.ValidationResult = await queryValidator.ValidateAsync(request, cancellationToken);
                 if (!viewModel.ValidationResult.IsValid)
                 {
                     return viewModel;
                 }
 
-                viewModel.Certificates = AutoMapper.Mapper.Map<ICollection<CertificateVM>>(privateCertRepository.GetAllCertificates());
+                var certificates = await privateCertRepository.GetAllCertificatesAsync();
+                viewModel.Certificates = AutoMapper.Mapper.Map<ICollection<CertificateVM>>(certificates);
 
-                return viewModel;
+                return viewModel;                
             }
         }
     }

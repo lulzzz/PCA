@@ -1,21 +1,22 @@
 ﻿using System.Windows;
+using MediatR;
 using PrivateCert.WinUI.Infrastructure;
 
 namespace PrivateCert.WinUI.Windows
 {
     public partial class GetMasterKey : BaseWindow
     {
-        private readonly Lib.Features.GetMasterKey.QueryHandler getMasterKeyQueryHandler;
+        private readonly IMediator mediator;
 
-        public GetMasterKey(Lib.Features.GetMasterKey.QueryHandler getMasterKeyQueryHandler)
+        public GetMasterKey(IMediator mediator)
         {
-            this.getMasterKeyQueryHandler = getMasterKeyQueryHandler;
+            this.mediator = mediator;
         }
 
-        private void BtnOK_Click(object sender, RoutedEventArgs e)
+        private async void BtnOK_Click(object sender, RoutedEventArgs e)
         {
             var query = new Lib.Features.GetMasterKey.Query(pwdPassword.Password);
-            var result = getMasterKeyQueryHandler.Handle(query);
+            var result = await mediator.Send(query);
             if (!result.IsValid)
             {
                 MessageBoxHelper.ShowErrorMessage(result.Errors);

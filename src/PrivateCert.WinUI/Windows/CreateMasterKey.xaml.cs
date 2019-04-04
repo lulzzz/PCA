@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using MediatR;
 using PrivateCert.WinUI.Infrastructure;
 
 namespace PrivateCert.WinUI.Windows
@@ -8,17 +9,17 @@ namespace PrivateCert.WinUI.Windows
     /// </summary>
     public partial class CreateMasterKey : BaseWindow
     {
-        private readonly Lib.Features.CreateMasterKey.CommandHandler createMasterKeyCommandHandler;
+        private readonly IMediator mediator;
 
-        public CreateMasterKey(Lib.Features.CreateMasterKey.CommandHandler createMasterKeyCommandHandler)
+        public CreateMasterKey(IMediator mediator)
         {
-            this.createMasterKeyCommandHandler = createMasterKeyCommandHandler;
+            this.mediator = mediator;
         }
 
-        private void BtnSave_Click(object sender, RoutedEventArgs e)
+        private async void BtnSave_Click(object sender, RoutedEventArgs e)
         {
             var command = new Lib.Features.CreateMasterKey.Command(pwdPassword.Password, pwdRetypePassword.Password);
-            var result = createMasterKeyCommandHandler.Handle(command);
+            var result = await mediator.Send(command);
             if (!result.IsValid)
             {
                 MessageBoxHelper.ShowErrorMessage(result.Errors);

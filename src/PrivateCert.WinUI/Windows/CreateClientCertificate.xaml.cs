@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using MediatR;
 using PrivateCert.WinUI.Infrastructure;
 
 namespace PrivateCert.WinUI.Windows
@@ -8,11 +9,11 @@ namespace PrivateCert.WinUI.Windows
     /// </summary>
     public partial class CreateClientCertificate : BaseWindow
     {
-        private readonly Lib.Features.CreateClientCertificate.CommandHandler createClientCertificateCommandHandler;
+        private readonly IMediator mediator;
 
-        public CreateClientCertificate(Lib.Features.CreateClientCertificate.CommandHandler createClientCertificateCommandHandler)
+        public CreateClientCertificate(IMediator mediator)
         {
-            this.createClientCertificateCommandHandler = createClientCertificateCommandHandler;
+            this.mediator = mediator;
             InitializeComponent();
         }
 
@@ -21,10 +22,10 @@ namespace PrivateCert.WinUI.Windows
             this.Close();
         }
 
-        private void BtnCreate_Click(object sender, RoutedEventArgs e)
+        private async void BtnCreate_Click(object sender, RoutedEventArgs e)
         {
             var command = new Lib.Features.CreateClientCertificate.Command((Lib.Features.CreateClientCertificate.ViewModel)DataContext, App.MasterKeyDecrypted);
-            var result = createClientCertificateCommandHandler.Handle(command);
+            var result = await mediator.Send(command);
             if (!result.IsValid)
             {
                 MessageBoxHelper.ShowErrorMessage(result.Errors);

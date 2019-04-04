@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
 using FluentValidation.Validators;
+using MediatR;
 using PrivateCert.Lib.Infrastructure;
 using PrivateCert.Lib.Interfaces;
 using PrivateCert.Lib.Model;
@@ -35,7 +38,7 @@ namespace PrivateCert.Lib.Features
             public string ThirdCRL { get; set; }
         }
 
-        public class Command
+        public class Command : IRequest<ValidationResult>
         {
             public Command(ViewModel viewModel, string masterKeyDecrypted)
             {
@@ -113,7 +116,7 @@ namespace PrivateCert.Lib.Features
             }
         }
 
-        public class CommandHandler
+        public class CommandHandler : IRequestHandler<Command, ValidationResult>
         {
             private readonly IPrivateCertRepository privateCertRepository;
 
@@ -129,19 +132,19 @@ namespace PrivateCert.Lib.Features
                 this.unitOfWork = unitOfWork;
             }
 
-            public ValidationResult Handle(Command command)
+            public async Task<ValidationResult> Handle(Command command, CancellationToken cancellationToken)
             {
                 unitOfWork.BeginTransaction();
-                var result = validator.Validate(command);
+                var result = await validator.ValidateAsync(command, cancellationToken);
                 if (!result.IsValid)
                 {
                     return result;
                 }
 
-                var passphrase = privateCertRepository.GetPassphrase();
+                var passphrase = await privateCertRepository.GetPassphraseAsync();
                 var passphraseDecrypted = StringCipher.Decrypt(passphrase, command.MasterKeyDecrypted);
                 var certificate = Certificate.CreateRootCertificate(command, passphraseDecrypted);
-                privateCertRepository.AddCertificate(certificate);
+                await privateCertRepository.AddCertificateAsync(certificate);
                 unitOfWork.SaveChanges();
                 unitOfWork.CommitTransaction();
 

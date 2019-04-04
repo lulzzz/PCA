@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation.Validators;
 using PrivateCert.Lib.Infrastructure;
@@ -17,23 +18,23 @@ namespace PrivateCert.Lib.Features
             this.privateCertRepository = privateCertRepository;
         }
 
-        public bool MasterKeySucessfulyDecrypted(string password)
+        public async Task<bool> MasterKeySucessfulyDecrypted(string password, CancellationToken cancellationToken)
         {
-            var masterKey = privateCertRepository.GetMasterKey();
+            var masterKey = await privateCertRepository.GetMasterKeyAsync();
             var passwordHashed = StringHash.GetHash(password);
             var passwordHashedString = StringHash.GetHashString(passwordHashed);
             return masterKey == passwordHashedString;
         }
 
-        public bool MasterKeyDoesExists(object entity)
+        public async Task<bool> MasterKeyDoesExists(object entity, CancellationToken cancellationToken)
         {
-            var masterKey = privateCertRepository.GetMasterKey();
+            var masterKey = await privateCertRepository.GetMasterKeyAsync();
             return masterKey != null;
         }
 
-        public void MasterKeyDoesNotExists(object entity, CustomContext customContext)
+        public async Task MasterKeyDoesNotExists(object entity, CustomContext customContext, CancellationToken cancellationToken)
         {
-            if (MasterKeyDoesExists(entity))
+            if (await MasterKeyDoesExists(entity, cancellationToken))
             {
                 customContext.AddFailure("Master key already exists.");
             }

@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
 using FluentValidation.Validators;
+using MediatR;
 using PrivateCert.Lib.Infrastructure;
 using PrivateCert.Lib.Interfaces;
 using PrivateCert.Lib.Model;
@@ -15,7 +17,7 @@ namespace PrivateCert.Lib.Features
 {
     public class DownloadCertificate
     {
-        public class Query
+        public class Query : IRequest<ViewModel>
         {
             public Query(int certificateId, string masterKeyDecrypted)
             {
@@ -57,14 +59,14 @@ namespace PrivateCert.Lib.Features
 
             private void CertificateExists(Query query, CustomContext customContext)
             {
-                if (privateCertRepository.GetCertificate(query.CertificateId) == null)
+                if (privateCertRepository.GetCertificateAsync(query.CertificateId) == null)
                 {
                     customContext.AddFailure($"Certificate with Id {query.CertificateId} does not exists.");
                 }
             }
         }
 
-        public class QueryHandler
+        public class QueryHandler : IRequestHandler<Query, ViewModel>
         {
             private readonly QueryValidator queryValidator;
 
@@ -76,18 +78,18 @@ namespace PrivateCert.Lib.Features
                 this.privateCertRepository = privateCertRepository;
             }
 
-            public ViewModel Handle(Query query)
+            public async Task<ViewModel> Handle(Query request, CancellationToken cancellationToken)
             {
                 var viewModel = new ViewModel();
-                viewModel.ValidationResult = queryValidator.Validate(query);
+                viewModel.ValidationResult = await queryValidator.ValidateAsync(request, cancellationToken);
                 if (!viewModel.ValidationResult.IsValid)
                 {
                     return viewModel;
                 }
 
-                var certificate = privateCertRepository.GetCertificate(query.CertificateId);
-                var passphrase = privateCertRepository.GetPassphrase();
-                var passphraseDecrypted = StringCipher.Decrypt(passphrase, query.MasterKeyDecrypted);
+                var certificate = await privateCertRepository.GetCertificateAsync(request.CertificateId);
+                var passphrase = await privateCertRepository.GetPassphraseAsync();
+                var passphraseDecrypted = StringCipher.Decrypt(passphrase, request.MasterKeyDecrypted);
 
                 var x509 = new X509Certificate2();
                 x509.Import(certificate.PfxData, passphraseDecrypted, X509KeyStorageFlags.Exportable);

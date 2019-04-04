@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
+using MediatR;
 using PrivateCert.Lib.Infrastructure;
 using PrivateCert.Lib.Interfaces;
 
@@ -8,7 +11,7 @@ namespace PrivateCert.Lib.Features
 {
     public class SetMasterKey
     {
-        public class Command
+        public class Command : IRequest<ValidationResult>
         {
             public Command(string currentPassword, string password, string retypePassword)
             {
@@ -32,9 +35,9 @@ namespace PrivateCert.Lib.Features
                     .Cascade(CascadeMode.StopOnFirstFailure)
                     .NotEmpty()
                     .WithMessage("'Current Password' field is required.")
-                    .Must(baseValidator.MasterKeyDoesExists)
+                    .MustAsync(baseValidator.MasterKeyDoesExists)
                     .WithMessage("'Master key' does not exists.")
-                    .Must(baseValidator.MasterKeySucessfulyDecrypted)
+                    .MustAsync(baseValidator.MasterKeySucessfulyDecrypted)
                     .WithMessage("'Current Password' is invalid.");
                 RuleFor(c => c.Password).NotEmpty().WithMessage("'Password' field is required.");
                 RuleFor(c => c.RetypePassword)
@@ -45,7 +48,7 @@ namespace PrivateCert.Lib.Features
             }
         }
 
-        public class CommandHandler
+        public class CommandHandler : IRequestHandler<Command,ValidationResult>
         {
             private readonly CommandValidator commandValidator;
 
@@ -61,23 +64,23 @@ namespace PrivateCert.Lib.Features
                 this.unitOfWork = unitOfWork;
             }
 
-            public ValidationResult Handle(Command command)
+            public async Task<ValidationResult> Handle(Command request, CancellationToken cancellationToken)
             {
                 unitOfWork.BeginTransaction();
-                var result = commandValidator.Validate(command);
+                var result = await commandValidator.ValidateAsync(request, cancellationToken);
                 if (!result.IsValid)
                 {
                     return result;
                 }
 
-                var hash = StringHash.GetHash(command.Password);
+                var hash = StringHash.GetHash(request.Password);
                 var hashToString = StringHash.GetHashString(hash);
-                privateCertRepository.SetMasterKey(hashToString);
+                await privateCertRepository.SetMasterKeyAsync(hashToString);
 
-                var passphrase = privateCertRepository.GetPassphrase();
-                var passphraseDecrypted = StringCipher.Decrypt(passphrase, command.CurrentPassword);
-                var passphraseEncrypted = StringCipher.Encrypt(passphraseDecrypted, command.Password);
-                privateCertRepository.SetPassphrase(passphraseEncrypted);
+                var passphrase = await privateCertRepository.GetPassphraseAsync();
+                var passphraseDecrypted = StringCipher.Decrypt(passphrase, request.CurrentPassword);
+                var passphraseEncrypted = StringCipher.Encrypt(passphraseDecrypted, request.Password);
+                await privateCertRepository.SetPassphraseAsync(passphraseEncrypted);
 
                 unitOfWork.SaveChanges();
                 unitOfWork.CommitTransaction();

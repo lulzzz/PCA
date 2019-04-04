@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
+using MediatR;
 using PrivateCert.Lib.Infrastructure;
 using PrivateCert.Lib.Interfaces;
 
@@ -12,7 +14,7 @@ namespace PrivateCert.Lib.Features
 {
     public class CreateMasterKey
     {
-        public class Command
+        public class Command : IRequest<ValidationResult>
         {
             public Command(string password, string retypePassword)
             {
@@ -35,11 +37,11 @@ namespace PrivateCert.Lib.Features
                     .WithMessage("'Retype Password' field is required.")
                     .Equal(c => c.Password)
                     .WithMessage("Password fields mismatch.");
-                RuleFor(c => c).Custom(baseValidator.MasterKeyDoesNotExists);
+                RuleFor(c => c).CustomAsync(baseValidator.MasterKeyDoesNotExists);
             }
         }
 
-        public class CommandHandler
+        public class CommandHandler : IRequestHandler<Command, ValidationResult>
         {
             private readonly CommandValidator commandValidator;
 
@@ -55,10 +57,10 @@ namespace PrivateCert.Lib.Features
                 this.unitOfWork = unitOfWork;
             }
 
-            public ValidationResult Handle(Command command)
+            public async Task<ValidationResult> Handle(Command command, CancellationToken cancellationToken)
             {
                 unitOfWork.BeginTransaction();
-                var result = commandValidator.Validate(command);
+                var result = await commandValidator.ValidateAsync(command);
                 if (!result.IsValid)
                 {
                     return result;
@@ -66,11 +68,11 @@ namespace PrivateCert.Lib.Features
 
                 var hash = StringHash.GetHash(command.Password);
                 var hashToString = StringHash.GetHashString(hash);
-                privateCertRepository.SetMasterKey(hashToString);
+                await privateCertRepository.SetMasterKeyAsync(hashToString);
 
                 var newPassphrase = Guid.NewGuid().ToString();
                 var passphraseEncrypted = StringCipher.Encrypt(newPassphrase, command.Password);
-                privateCertRepository.SetPassphrase(passphraseEncrypted);
+                await privateCertRepository.SetPassphraseAsync(passphraseEncrypted);
 
                 unitOfWork.SaveChanges();
                 unitOfWork.CommitTransaction();
@@ -78,7 +80,7 @@ namespace PrivateCert.Lib.Features
             }
         }
 
-        public class QueryHandler
+        public class QueryHandler : IRequestHandler<Query,ValidationResult>
         {
             private readonly QueryValidator queryValidator;
 
@@ -87,9 +89,9 @@ namespace PrivateCert.Lib.Features
                 this.queryValidator = queryValidator;
             }
 
-            public ValidationResult Handle(Query query)
+            public Task<ValidationResult> Handle(Query query, CancellationToken cancellationToken)
             {
-                return queryValidator.Validate(query);
+                return Task.FromResult(queryValidator.Validate(query));
             }
         }
 
@@ -97,13 +99,12 @@ namespace PrivateCert.Lib.Features
         {
             public QueryValidator(BaseValidator baseValidator)
             {
-                RuleFor(c => c).Custom(baseValidator.MasterKeyDoesNotExists);
+                RuleFor(c => c).CustomAsync(baseValidator.MasterKeyDoesNotExists);
             }
         }
 
-        public class Query
+        public class Query : IRequest<ValidationResult>
         {
         }
-
     }
 }

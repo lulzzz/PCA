@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentValidation;
 using FluentValidation.Results;
+using MediatR;
 using PrivateCert.Lib.Infrastructure;
 using PrivateCert.Lib.Interfaces;
 using PrivateCert.Lib.Model;
@@ -10,7 +13,7 @@ namespace PrivateCert.Lib.Features
 {
     public class CreateServerCertificate
     {
-        public class Query
+        public class Query : IRequest<ViewModel>
         {
         }
 
@@ -31,7 +34,7 @@ namespace PrivateCert.Lib.Features
         {
         }
 
-        public class QueryHandler
+        public class QueryHandler : IRequestHandler<Query, ViewModel>
         {
             private readonly QueryValidator queryValidator;
 
@@ -43,16 +46,16 @@ namespace PrivateCert.Lib.Features
                 this.privateCertRepository = privateCertRepository;
             }
 
-            public ViewModel Handle(Query query)
+            public async Task<ViewModel> Handle(Query request, CancellationToken cancellationToken)
             {
                 var viewModel = new ViewModel();
-                viewModel.ValidationResult = queryValidator.Validate(query);
+                viewModel.ValidationResult = await queryValidator.ValidateAsync(request,cancellationToken);
                 if (!viewModel.ValidationResult.IsValid)
                 {
                     return viewModel;
                 }
 
-                viewModel.AuthorityCertificates = privateCertRepository.GetValidAuthorityCertificates();
+                viewModel.AuthorityCertificates = await privateCertRepository.GetValidAuthorityCertificatesAsync();
                 viewModel.SelectedAuthorityCertificateId = viewModel.AuthorityCertificates.First().CertificateId;
                 viewModel.ExpirationDateInDays = 720;
                 viewModel.IssuerName = "some.domain.com or *.domain.com";
@@ -61,7 +64,7 @@ namespace PrivateCert.Lib.Features
             }
         }
 
-        public class Command
+        public class Command : IRequest<ValidationResult>
         {
             public Command(ViewModel viewModel, string masterKeyDecrypted)
             {
@@ -84,7 +87,7 @@ namespace PrivateCert.Lib.Features
         {
         }
 
-        public class CommandHandler
+        public class CommandHandler : IRequestHandler<Command,ValidationResult>
         {
             private readonly CommandValidator commandValidator;
             private readonly IPrivateCertRepository privateCertRepository;
@@ -97,24 +100,25 @@ namespace PrivateCert.Lib.Features
                 this.unitOfWork = unitOfWork;
             }
 
-            public ValidationResult Handle(Command command)
+            public async Task<ValidationResult> Handle(Command command, CancellationToken cancellationToken)
             {
                 unitOfWork.BeginTransaction();
-                var result = commandValidator.Validate(command);
+                var result = await commandValidator.ValidateAsync(command, cancellationToken);
                 if (!result.IsValid)
                 {
                     return result;
                 }
 
-                var passphrase = privateCertRepository.GetPassphrase();
+                var passphrase = await privateCertRepository.GetPassphraseAsync();
                 var passphraseDecrypted = StringCipher.Decrypt(passphrase, command.MasterKeyDecrypted);
-                var parentCertificate = privateCertRepository.GetCertificate(command.SelectedAuthorityCertificateId);
+                var parentCertificate = await privateCertRepository.GetCertificateAsync(command.SelectedAuthorityCertificateId);
                 var certificate = Certificate.CreateServerCertificate(command, parentCertificate, passphraseDecrypted);
-                privateCertRepository.AddCertificate(certificate);
+                await privateCertRepository.AddCertificateAsync(certificate);
                 unitOfWork.SaveChanges();
                 unitOfWork.CommitTransaction();
 
                 return result;
+
             }
         }
     }

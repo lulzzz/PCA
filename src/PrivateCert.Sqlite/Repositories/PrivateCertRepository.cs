@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 using AutoMapper;
 using PrivateCert.Lib.Interfaces;
 using PrivateCert.Lib.Model;
@@ -19,9 +21,10 @@ namespace PrivateCert.Sqlite.Repositories
             this.context = context;
         }
 
-        public string GetMasterKey()
+        public async Task<string> GetMasterKeyAsync()
         {
-            return context.Settings.Find("MasterKey")?.Value;
+            var setting = await context.Settings.FindAsync("MasterKey");
+            return setting?.Value;
         }
 
         public void InsertError(Log log)
@@ -30,23 +33,31 @@ namespace PrivateCert.Sqlite.Repositories
             logger.Error("{B}", log.Message);
         }
 
-        public void SetMasterKey(string password)
+        public async Task SetMasterKeyAsync(string password)
         {
-            var masterkey = context.Settings.Find("MasterKey");
-            masterkey.Value = password;
+            var masterkey = await context.Settings.FindAsync("MasterKey");
+            if (masterkey != null)
+            {
+                masterkey.Value = password;
+            }
         }
 
-        public string GetPassphrase()
+        public async Task<string> GetPassphraseAsync()
         {
-            return context.Settings.Find("Passphrase")?.Value;
+            var setting = await context.Settings.FindAsync("Passphrase");
+            return setting?.Value;
         }
 
-        public void SetPassphrase(string passphrase)
+        public async Task SetPassphraseAsync(string passphrase)
         {
-            context.Settings.Find("Passphrase").Value = passphrase;
+            var setting = await context.Settings.FindAsync("Passphrase");
+            if (setting != null)
+            {
+                setting.Value = passphrase;
+            }
         }
 
-        public void AddCertificate(Certificate certificate)
+        public async Task AddCertificateAsync(Certificate certificate)
         {
             if (context.Database.CurrentTransaction == null)
             {
@@ -54,7 +65,7 @@ namespace PrivateCert.Sqlite.Repositories
             }
 
             var efCertificate = Mapper.Map<Model.Certificate>(certificate);
-            var maxId = context.Database.SqlQuery<int?>("SELECT MAX(CertificateId) FROM Certificates").SingleOrDefault();
+            var maxId = await context.Database.SqlQuery<int?>("SELECT MAX(CertificateId) FROM Certificates").SingleOrDefaultAsync();
             efCertificate.CertificateId = (maxId ?? 0) + 1;
             if (efCertificate.AuthorityData != null)
             {
@@ -64,26 +75,26 @@ namespace PrivateCert.Sqlite.Repositories
             context.Certificates.Add(efCertificate);
         }
 
-        public Certificate GetCertificate(int certificateId)
+        public async Task<Certificate> GetCertificateAsync(int certificateId)
         {
-            var efCertificate = context.Certificates.Find(certificateId);
+            var efCertificate = await context.Certificates.FindAsync(certificateId);
             return Mapper.Map<Certificate>(efCertificate);
         }
 
-        public ICollection<Certificate> GetValidAuthorityCertificates()
+        public async Task<ICollection<Certificate>> GetValidAuthorityCertificatesAsync()
         {
-            var efCertificates = context.Certificates
+            var efCertificates = await context.Certificates
                 .Where(
                     c => c.AuthorityId == null && c.ExpirationDate > DateTime.Now && c.IssueDate < DateTime.Now &&
                          (!c.RevocationDate.HasValue || c.RevocationDate.HasValue && c.RevocationDate < DateTime.Now))
                 .OrderBy(c => c.Name)
-                .ToList();
+                .ToListAsync();
             return Mapper.Map<ICollection<Certificate>>(efCertificates);
         }
 
-        public ICollection<Certificate> GetAllCertificates()
+        public async Task<ICollection<Certificate>> GetAllCertificatesAsync()
         {
-            var efCertificates = context.Certificates.OrderBy(c => c.CertificateTypeId).ThenBy(c => c.Name).ToList();
+            var efCertificates = await context.Certificates.OrderBy(c => c.CertificateTypeId).ThenBy(c => c.Name).ToListAsync();
             return Mapper.Map<ICollection<Certificate>>(efCertificates);
         }
     }

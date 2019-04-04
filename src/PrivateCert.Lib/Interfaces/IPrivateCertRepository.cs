@@ -9,22 +9,22 @@ namespace PrivateCert.Lib.Interfaces
 {
     public interface IPrivateCertRepository
     {
-        string GetMasterKey();
+        Task<string> GetMasterKeyAsync();
 
         void InsertError(Log log);
 
-        void SetMasterKey(string password);
+        Task SetMasterKeyAsync(string password);
 
-        string GetPassphrase();
+        Task<string> GetPassphraseAsync();
 
-        void SetPassphrase(string passphrase);
+        Task SetPassphraseAsync(string passphrase);
 
-        void AddCertificate(Certificate certificate);
+        Task AddCertificateAsync(Certificate certificate);
 
-        ICollection<Certificate> GetAllCertificates();
+        Task<ICollection<Certificate>> GetAllCertificatesAsync();
 
-        Certificate GetCertificate(int certificateId);
+        Task<Certificate> GetCertificateAsync(int certificateId);
 
-        ICollection<Certificate> GetValidAuthorityCertificates();
+        Task<ICollection<Certificate>> GetValidAuthorityCertificatesAsync();
     }
 }

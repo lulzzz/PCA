@@ -1,17 +1,16 @@
 ﻿using System.Windows;
+using MediatR;
 using PrivateCert.WinUI.Infrastructure;
 
 namespace PrivateCert.WinUI.Windows
 {
     public partial class CreateServerCertificate : BaseWindow
     {
-        private readonly Lib.Features.CreateServerCertificate.CommandHandler createServerCertificateCommandHandler;
-        private readonly Lib.Features.CreateServerCertificate.QueryHandler createServerCertificateQueryHandler;
+        private readonly IMediator mediator;
 
-        public CreateServerCertificate(Lib.Features.CreateServerCertificate.CommandHandler createServerCertificateCommandHandler, Lib.Features.CreateServerCertificate.QueryHandler createServerCertificateQueryHandler)
+        public CreateServerCertificate(IMediator mediator)
         {
-            this.createServerCertificateCommandHandler = createServerCertificateCommandHandler;
-            this.createServerCertificateQueryHandler = createServerCertificateQueryHandler;
+            this.mediator = mediator;
             InitializeComponent();
         }
 
@@ -20,10 +19,10 @@ namespace PrivateCert.WinUI.Windows
             this.Close();
         }
 
-        private void BtnCreate_Click(object sender, RoutedEventArgs e)
+        private async void BtnCreate_Click(object sender, RoutedEventArgs e)
         {
             var command = new Lib.Features.CreateServerCertificate.Command((Lib.Features.CreateServerCertificate.ViewModel)DataContext, App.MasterKeyDecrypted);
-            var result = createServerCertificateCommandHandler.Handle(command);
+            var result = await mediator.Send(command);
             if (!result.IsValid)
             {
                 MessageBoxHelper.ShowErrorMessage(result.Errors);
@@ -34,10 +33,10 @@ namespace PrivateCert.WinUI.Windows
             this.Close();
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             var query = new Lib.Features.CreateServerCertificate.Query();
-            var viewModel = createServerCertificateQueryHandler.Handle(query);
+            var viewModel = await mediator.Send(query);
             if (!viewModel.ValidationResult.IsValid)
             {
                 MessageBoxHelper.ShowErrorMessage(viewModel.ValidationResult.Errors);
