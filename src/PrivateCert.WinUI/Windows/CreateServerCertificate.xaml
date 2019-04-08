@@ -50,7 +50,7 @@
         </StackPanel>
         <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal">
             <TextBlock Width="150">URL (Issuer Name)</TextBlock>
-            <TextBox Name="txtCountry" Text="{Binding IssuerName}" Width="300" />
+            <TextBox Name="txtCountry" Text="{Binding SubjectName}" Width="300" />
         </StackPanel>
         <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal">
             <TextBlock Width="150">Expiration Date (Days)</TextBlock>

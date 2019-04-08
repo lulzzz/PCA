@@ -36,14 +36,17 @@ namespace PrivateCert.WinUI.Windows
             this.Close();
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            DataContext = new Lib.Features.CreateClientCertificate.ViewModel()
+            var query = new Lib.Features.CreateClientCertificate.Query();
+            var viewModel = await mediator.Send(query);
+            if (!viewModel.ValidationResult.IsValid)
             {
-                IssuerName = "signer",
-                Domain = "@domain.com",
-                ExpirationDateInDays = 360
-            };
+                MessageBoxHelper.ShowErrorMessage(viewModel.ValidationResult.Errors);
+                this.Close();
+            }
+
+            DataContext = viewModel;
             txtCountry.Focus();
         }
     }

@@ -21,7 +21,7 @@ namespace PrivateCert.Lib.Features
         {
             public int ExpirationDateInDays { get; set; }
 
-            public string IssuerName { get; set; }
+            public string SubjectName { get; set; }
 
             public ICollection<Certificate> AuthorityCertificates { get; set; }
 
@@ -58,7 +58,7 @@ namespace PrivateCert.Lib.Features
                 viewModel.AuthorityCertificates = await privateCertRepository.GetValidAuthorityCertificatesAsync();
                 viewModel.SelectedAuthorityCertificateId = viewModel.AuthorityCertificates.First().CertificateId;
                 viewModel.ExpirationDateInDays = 720;
-                viewModel.IssuerName = "some.domain.com or *.domain.com";
+                viewModel.SubjectName = "some.domain.com or *.domain.com";
 
                 return viewModel;
             }
@@ -69,7 +69,7 @@ namespace PrivateCert.Lib.Features
             public Command(ViewModel viewModel, string masterKeyDecrypted)
             {
                 MasterKeyDecrypted = masterKeyDecrypted;
-                IssuerName = viewModel.IssuerName;
+                SubjectName = viewModel.SubjectName;
                 ExpirationDateInDays = viewModel.ExpirationDateInDays;
                 SelectedAuthorityCertificateId = viewModel.SelectedAuthorityCertificateId;
             }
@@ -78,7 +78,7 @@ namespace PrivateCert.Lib.Features
 
             public int ExpirationDateInDays { get; }
 
-            public string IssuerName { get; }
+            public string SubjectName { get; }
 
             public string MasterKeyDecrypted { get; }
         }

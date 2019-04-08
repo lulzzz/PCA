@@ -54,8 +54,32 @@ namespace PrivateCert.Lib.Model
             x509AuthorityCertificate.Import(authorityCertificate.PfxData,passphraseDecrypted,
                 X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
             var rootDN = new CPI.DirectoryServices.DN(x509AuthorityCertificate.Issuer).Parent.RDNs.Select(c=>c.ToString()).Reverse().ToList();
-            var subjectName = string.Join(",",rootDN) + ",CN=" + command.IssuerName;
-            var x509 = GenerateServerCertificate(subjectName, command.ExpirationDateInDays, x509AuthorityCertificate, authorityCertificate.AuthorityData?.P7Bs, command.IssuerName);
+            var subjectName = string.Join(",",rootDN) + ",CN=" + command.SubjectName;
+            var x509 = GenerateServerCertificate(subjectName, command.ExpirationDateInDays, x509AuthorityCertificate, authorityCertificate.AuthorityData?.P7Bs, command.SubjectName);
+            var certificate = new Certificate()
+            {
+                ExpirationDate = x509.NotAfter,
+                CertificateType = CertificateTypeEnum.EndUser,
+                SerialNumber = x509.SerialNumber,
+                Name = x509.GetNameInfo(X509NameType.SimpleName, false),
+                Thumbprint = x509.Thumbprint,
+                IssueDate = x509.NotBefore,
+                AuthorityId = authorityCertificate.CertificateId
+            };
+
+            certificate.PfxData = x509.Export(X509ContentType.Pfx, passphraseDecrypted);
+
+            return certificate;
+        }
+
+        public static Certificate CreateClientCertificate(CreateClientCertificate.Command command, Certificate authorityCertificate, string passphraseDecrypted)
+        {
+            var x509AuthorityCertificate = new X509Certificate2();
+            x509AuthorityCertificate.Import(authorityCertificate.PfxData,passphraseDecrypted,
+                X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+            var rootDN = new CPI.DirectoryServices.DN(x509AuthorityCertificate.Issuer).Parent.RDNs.Select(c=>c.ToString()).Reverse().ToList();
+            var subjectName = string.Join(",",rootDN) + ",CN=" + command.SubjectName;
+            var x509 = GenerateClientCertificate(subjectName, command.ExpirationDateInDays, x509AuthorityCertificate, authorityCertificate.AuthorityData?.P7Bs);
             var certificate = new Certificate()
             {
                 ExpirationDate = x509.NotAfter,
@@ -184,7 +208,8 @@ namespace PrivateCert.Lib.Model
             return x509;
         }
 
-        private static X509Certificate2 GenerateServerCertificate(string subjectName, int expirationDateInDays, X509Certificate2 issuerCertificate, ICollection<string> p7bUrls, string siteName, int keyStrength = 2048)
+        private static X509Certificate2 GenerateServerCertificate(string subjectName, int expirationDateInDays, X509Certificate2 issuerCertificate, 
+            ICollection<string> p7bUrls, string siteName, int keyStrength = 2048)
         {
             var issuerPrivKey = DotNetUtilities.GetKeyPair(issuerCertificate.PrivateKey).Private;
             var issuerPublicKey = DotNetUtilities.GetKeyPair(issuerCertificate.PrivateKey).Public;
@@ -279,8 +304,8 @@ namespace PrivateCert.Lib.Model
         }
 
         public static X509Certificate2 GenerateClientCertificate(
-            string subjectName, DateTime now, DateTime expirationDate, X509Certificate2 issuerCertificate,
-            string[] p7bUrlPrefixes, string upnName, int keyStrength = 2048)
+            string subjectName, int expirationDateInDays, X509Certificate2 issuerCertificate,
+            ICollection<string> p7bUrls/*, string upnName*/, int keyStrength = 2048)
         {
             var issuerPrivKey = DotNetUtilities.GetKeyPair(issuerCertificate.PrivateKey).Private;
             var issuerPublicKey = DotNetUtilities.GetKeyPair(issuerCertificate.PrivateKey).Public;
@@ -310,7 +335,8 @@ namespace PrivateCert.Lib.Model
             certificateGenerator.SetSubjectDN(subjectDN);
 
             // Valid For
-            certificateGenerator.SetNotBefore(now.ToUniversalTime());
+            certificateGenerator.SetNotBefore(DateTime.Now.ToUniversalTime());
+            var expirationDate = DateTime.Now.AddDays(expirationDateInDays);
             certificateGenerator.SetNotAfter(expirationDate.ToUniversalTime());
 
             // Subject Public Key
@@ -330,7 +356,7 @@ namespace PrivateCert.Lib.Model
             // Adiciona caminhos de CRL do certificado raiz
             AddRevocationUrlsFromIssuer(certificateGenerator, issuerCertificate);
 
-            AddP7bUrls(certificateGenerator, p7bUrlPrefixes);
+            AddP7bUrls(certificateGenerator, p7bUrls);
 
             // Informações adicionais para definir a finalidade do certificado.
             certificateGenerator.AddExtension(
@@ -340,17 +366,17 @@ namespace PrivateCert.Lib.Model
             certificateGenerator.AddExtension(
                 X509Extensions.ExtendedKeyUsage, false,
                 new ExtendedKeyUsage(
-                    KeyPurposeID.IdKPClientAuth, KeyPurposeID.IdKPSmartCardLogon, KeyPurposeID.IdKPCodeSigning));
+                    KeyPurposeID.IdKPClientAuth, KeyPurposeID.IdKPSmartCardLogon/*, KeyPurposeID.IdKPCodeSigning*/));
 
-            Asn1EncodableVector otherName = new Asn1EncodableVector();
-            otherName.Add(new DerObjectIdentifier("1.3.6.1.4.1.311.20.2.3"));
-            otherName.Add(new DerTaggedObject(true, GeneralName.OtherName, new DerUtf8String(upnName)));
-            Asn1Object upn = new DerTaggedObject(false, 0, new DerSequence(otherName));
-            Asn1EncodableVector generalNames = new Asn1EncodableVector();
-            generalNames.Add(upn);
+            //Asn1EncodableVector otherName = new Asn1EncodableVector();
+            //otherName.Add(new DerObjectIdentifier("1.3.6.1.4.1.311.20.2.3"));
+            //otherName.Add(new DerTaggedObject(true, GeneralName.OtherName, new DerUtf8String(upnName)));
+            //Asn1Object upn = new DerTaggedObject(false, 0, new DerSequence(otherName));
+            //Asn1EncodableVector generalNames = new Asn1EncodableVector();
+            //generalNames.Add(upn);
 
-            // Adding extension to X509V3CertificateGenerator
-            certificateGenerator.AddExtension(X509Extensions.SubjectAlternativeName, false, new DerSequence(generalNames));
+            //// Adding extension to X509V3CertificateGenerator
+            //certificateGenerator.AddExtension(X509Extensions.SubjectAlternativeName, false, new DerSequence(generalNames));
 
             certificateGenerator.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(false));
 

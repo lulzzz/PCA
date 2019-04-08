@@ -38,15 +38,19 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top">Insert the user name and the domain.</TextBlock>
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top">Insert just the subject name. This certificate will be created for Client Authentication usage.</TextBlock>
 
         <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
-            <TextBlock Width="150">Issuer Name</TextBlock>
-            <TextBox Name="txtCountry" Text="{Binding IssuerName}" Width="300" />
+            <TextBlock Width="150">Issuer</TextBlock>
+            <ComboBox Name="ddlRoot"
+                      ItemsSource="{Binding Path=AuthorityCertificates}"
+                      DisplayMemberPath="Name"
+                      SelectedValuePath="CertificateId"
+                      SelectedValue="{Binding Path=SelectedAuthorityCertificateId}" />
         </StackPanel>
         <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal">
-            <TextBlock Width="150">Domain</TextBlock>
-            <TextBox Name="txtDomain" Text="{Binding Domain}" Width="300"/>
+            <TextBlock Width="150">Subject Name</TextBlock>
+            <TextBox Name="txtCountry" Text="{Binding SubjectName}" Width="300" />
         </StackPanel>
         <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal">
             <TextBlock Width="150">Expiration Date (Days)</TextBlock>
@@ -57,5 +61,6 @@
             <Button Name="btnCreate" Content="Create" HorizontalAlignment="Left"  VerticalAlignment="Top" Margin="5,0"  Click="BtnCreate_Click" IsDefault="True"  />
             <Button Name="btnCancel" Content="Cancel" HorizontalAlignment="Left" VerticalAlignment="Top"  Click="BtnCancel_Click"    />
         </StackPanel>
+
     </Grid>
 </base:BaseWindow>
