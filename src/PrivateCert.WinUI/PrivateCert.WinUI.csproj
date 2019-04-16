@@ -226,16 +226,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PrivateCert.CompositionRoot\PrivateCert.CompositionRoot.csproj">
-      <Project>{93A85998-6B4F-43F5-9164-539D5036649B}</Project>
-      <Name>PrivateCert.CompositionRoot</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\PrivateCert.Lib\PrivateCert.Lib.csproj">
-      <Project>{f029e91e-fd95-413d-9c42-e85f7e6f14a9}</Project>
-      <Name>PrivateCert.Lib</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
       <Visible>False</Visible>
       <ProductName>Microsoft .NET Framework 4.7.2 %28x86 and x64%29</ProductName>

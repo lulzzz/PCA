@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS _DBVersions(
+	VersionID INTEGER PRIMARY KEY,
+	CreationDate TEXT
+);
+
+CREATE TABLE IF NOT EXISTS  _DBScripts(
+	ScriptID INTEGER PRIMARY KEY AUTOINCREMENT,
+	VersionID INTEGER,
+	ScriptName TEXT,
+	ExecutionDate TEXT,
+	FOREIGN KEY(ExecutionDate) REFERENCES _DBVersions(VersionID)
+) 

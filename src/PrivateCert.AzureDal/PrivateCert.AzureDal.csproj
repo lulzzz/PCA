@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Initializer\Create Database Structure.sql" />
+    <None Remove="Initializer\Scripts\001\001 - Table Structure.sql" />
+    <None Remove="Initializer\Scripts\001\002 - Seed Data.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Initializer\Create Database Structure.sql" />
+    <EmbeddedResource Include="Initializer\Scripts\001\001 - Table Structure.sql" />
+    <EmbeddedResource Include="Initializer\Scripts\001\002 - Seed Data.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.2.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PrivateCert.LibCore\PrivateCert.LibCore.csproj" />
+  </ItemGroup>
+
+</Project>

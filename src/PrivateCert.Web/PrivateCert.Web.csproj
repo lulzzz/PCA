@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <UserSecretsId>aspnet-PrivateCert.Web-4E4360AA-E90F-49EF-87B4-89FA781B58CB</UserSecretsId>
+    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\PrivateCert.AzureDal\PrivateCert.AzureDal.csproj" />
+    <ProjectReference Include="..\PrivateCert.CompositionRootCore\PrivateCert.CompositionRootCore.csproj" />
+    <ProjectReference Include="..\PrivateCert.LibCore\PrivateCert.LibCore.csproj" />
+  </ItemGroup>
+
+</Project>

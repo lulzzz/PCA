@@ -29,8 +29,9 @@ namespace PrivateCert.Sqlite.Repositories
 
         public void InsertError(Log log)
         {
+            var logEF = Mapper.Map<Model.Log>(log);
             var logger = new LoggerConfiguration().WriteTo.RollingFile("logs\\log.txt", LogEventLevel.Error).CreateLogger();
-            logger.Error("{B}", log.Message);
+            logger.Error("{B}", logEF.GetMessage());
         }
 
         public async Task SetMasterKeyAsync(string password)

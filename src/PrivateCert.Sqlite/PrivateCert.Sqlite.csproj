@@ -96,12 +96,6 @@
     <EmbeddedResource Include="Initializer\Scripts\001\002 - Seed Data.sql" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PrivateCert.Lib\PrivateCert.Lib.csproj">
-      <Project>{f029e91e-fd95-413d-9c42-e85f7e6f14a9}</Project>
-      <Name>PrivateCert.Lib</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Initializer\Scripts\001\001 - Table Structure.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

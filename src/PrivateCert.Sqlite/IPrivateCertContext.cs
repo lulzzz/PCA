@@ -12,8 +12,6 @@ namespace PrivateCert.Sqlite
 
         DbSet<Setting> Settings { get; set; }
 
-        DbSet<Log> Logs { get; set; }
-
         Database Database { get; }
     }
 }

@@ -18,8 +18,6 @@ namespace PrivateCert.Sqlite
 
         public virtual DbSet<Setting> Settings { get; set; }
 
-        public virtual DbSet<Log> Logs { get; set; }
-
         public new virtual Database Database => base.Database;
 
         protected override void Dispose(bool disposing)
@@ -38,8 +36,6 @@ namespace PrivateCert.Sqlite
             modelBuilder.Entity<CertificateType>().Property(e => e.Description).IsUnicode(false);
 
             modelBuilder.Entity<Setting>().Property(e => e.Value).IsUnicode(false);
-
-            modelBuilder.Entity<Log>().Property(e => e.Message).IsUnicode(false);
         }
 
         public void BeginTransaction()
